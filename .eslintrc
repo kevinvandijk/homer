@@ -1,0 +1,40 @@
+{
+    "ecmaFeatures": {
+        "blockBindings": true,
+        "forOf": true,
+        "jsx": true
+    },
+    "globals": {
+        "define": 1,
+        "logger": 1
+    },
+    "rules": {
+        "key-spacing": [2, {"mode": "minimum", "beforeColon": false, "afterColon": true}],
+        "no-trailing-spaces": 1,
+        "semi": 2,
+        "block-scoped-var": 2,
+        "no-unused-vars": [2, { "args": "none" }],
+        "no-debugger": 2,
+        "curly": [2, "multi-line"],
+        "quotes" : 0,
+        "no-dupe-args": 2,
+        "no-duplicate-case": 2,
+        "no-empty": 2,
+        "no-underscore-dangle": 0,
+        "eqeqeq": 0,
+        "comma-spacing": 1,
+        "space-infix-ops": 1,
+        "semi-spacing": 1,
+        "no-multi-spaces": 1,
+        "space-after-keywords": 2,
+        "space-before-function-paren": [2, "never"],
+        "space-before-blocks": 2,
+        "no-shadow": 0,
+        "strict": 0,
+        "eol-last": 2
+    },
+     "env": {
+        "browser": true,
+        "node": true
+    }
+}
