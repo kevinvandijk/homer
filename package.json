@@ -6,8 +6,10 @@
   "author": "Kevin van Dijk",
   "license": "",
   "dependencies": {
+    "bluebird": "^3.0.5",
     "dotenv": "^1.2.0",
-    "node-hue-api": "^1.2.1",
-    "plex-api": "^3.2.0"
+    "node-hue-api": "0.2.6",
+    "plex-api": "^3.2.0",
+    "underscore": "^1.8.3"
   }
 }
