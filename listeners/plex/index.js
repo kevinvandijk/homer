@@ -1,5 +1,3 @@
-"use strict";
-
 import PlexApi from 'plex-api';
 import Promise from 'bluebird';
 

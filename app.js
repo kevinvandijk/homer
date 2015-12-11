@@ -1,5 +1,3 @@
-"use strict";
-
 import dotenv from 'dotenv';
 import PlexListener from './listeners/plex';
 import hueChannel from './channels/hue';

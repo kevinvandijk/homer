@@ -1,5 +1,3 @@
-"use strict";
-
 import hue, {HueApi, lightState} from 'node-hue-api';
 import Promise from 'bluebird';
 
