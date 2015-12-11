@@ -45,9 +45,9 @@ export default class PlexWatcher {
       const session = sessions[i];
 
       if (session._children) {
-        const found = session._children.filter(child => {
-          return child._elementType == 'Player' && child.title == name;
-        }
+        const playerRegex = new RegExp(name, 'i');
+        const found = session._children.filter(child =>
+          child._elementType == 'Player' && playerRegex.test(child.title)
         );
 
         if (found.length) {
