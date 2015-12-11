@@ -13,6 +13,7 @@ const plexOptions = {
   username: env.PLEX_USERNAME,
   password: env.PLEX_PASSWORD,
   authToken: env.PLEX_TOKEN,
+  device: env.PLEX_DEVICE,
   options: {
     identifier: '9ffb7743-cbd7-42ab-92fb-334f20ea57e6',
     name: 'Jarvis',

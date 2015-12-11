@@ -6,6 +6,8 @@ import Promise from 'bluebird';
 export default class PlexWatcher {
   constructor(plexOptions) {
     this.state = '';
+    this.device = plexOptions.device;
+    delete plexOptions.device;
 
     const plex = new PlexApi(plexOptions);
     this._eventListeners = [];
@@ -99,14 +101,14 @@ export default class PlexWatcher {
     const sessions = result._children || [];
 
     if (!sessions.length) {
-      console.warn('No sessions found');
+      // console.warn('No sessions found');
       return Promise.resolve({state: 'stopped'});
     }
 
-    const player = this._findPlayer('Plex Web (Chrome)', sessions);
+    const player = this._findPlayer(this.device, sessions);
 
     if (!player) {
-      console.warn('No active player found');
+      // console.warn('No active player found');
       return Promise.resolve({state: 'stopped'});
     } else {
       return Promise.resolve(player);
