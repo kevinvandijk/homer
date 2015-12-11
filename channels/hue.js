@@ -48,14 +48,12 @@ export default function(options) {
   return {
     dim(groupName, level) {
       findLightsByGroup(groupName, connection).then((result) => {
-        const groups = result.groups;
         const hueApi = result.hueApi;
 
         result.groups.forEach(group => {
           const state = lightState.create().on().brightness(level);
           hueApi.setGroupLightState(group.id, state);
         });
-
       });
     },
 
