@@ -1,6 +1,6 @@
 "use strict";
 
-import hue, {HueApi} from 'node-hue-api';
+import hue, {HueApi, lightState} from 'node-hue-api';
 import Promise from 'bluebird';
 
 function connectHue(options) {
@@ -43,14 +43,29 @@ function findLightsByGroup(name, connection) {
   });
 };
 
+// TODO: Fix weird promise api with findLightsByGroup
 export default function(options) {
   const connection = connectHue(options);
 
   return {
+    dim(groupName, level) {
+      findLightsByGroup(groupName, connection).then((result) => {
+        const groups = result.groups;
+        const hueApi = result.hueApi;
+
+        result.groups.forEach(group => {
+          const state = lightState.create().on().brightness(level);
+          hueApi.setGroupLightState(group.id, state);
+        });
+
+      });
+    },
+
     turnOn(groupName) {
       findLightsByGroup(groupName, connection).then((result) => {
         result.groups.forEach(group => {
-          result.hueApi.setGroupLightState(group.id, {'on': true});
+          const state = lightState.create().on().brightness(100);
+          result.hueApi.setGroupLightState(group.id, state);
         });
       });
     },

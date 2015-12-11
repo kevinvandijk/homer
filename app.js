@@ -28,7 +28,7 @@ const plexOptions = {
 
   const plexListener = new PlexListener(plexOptions);
   plexListener.on('play', () => hue.turnOff('living'));
-  plexListener.on('pause', () => hue.turnOn('living'));
+  plexListener.on('pause', () => hue.dim('living', 10));
   plexListener.on('resume', () => hue.turnOff('living'));
   plexListener.on('stop', () => hue.turnOn('living'));
 })();
