@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
 import PlexListener from './listeners/plex';
 import hueChannel from './channels/hue';
+import PlexChannel from './channels/plex';
+import express from 'express';
 
 dotenv.load();
 const env = process.env;
@@ -20,14 +22,31 @@ const plexOptions = {
   }
 };
 
-(function app() {
-  const hue = hueChannel({
-    username: env.HUE_USERNAME
-  });
+const plexChannel = new PlexChannel(plexOptions);
+const app = express();
 
-  const plexListener = new PlexListener(plexOptions);
-  plexListener.on('play', () => hue.turnOff('living'));
-  plexListener.on('pause', () => hue.dim('living', 10));
-  plexListener.on('resume', () => hue.turnOff('living'));
-  plexListener.on('stop', () => hue.turnOn('living'));
-})();
+app.get('/', (req, res) => {
+  plexChannel.startShow('Homeland').then(tvshows => {
+    res.json(tvshows);
+  });
+  // res.send('Hello World!');
+});
+
+const server = app.listen(3000, () => {
+  const host = server.address().address;
+  const port = server.address().port;
+
+  console.log(`App listening at http://${host}:${port}`);
+});
+
+// (function app() {
+//   const hue = hueChannel({
+//     username: env.HUE_USERNAME
+//   });
+//
+//   const plexListener = new PlexListener(plexOptions);
+//   plexListener.on('play', () => hue.turnOff('living'));
+//   plexListener.on('pause', () => hue.dim('living', 10));
+//   plexListener.on('resume', () => hue.turnOff('living'));
+//   plexListener.on('stop', () => hue.turnOn('living'));
+// })();
