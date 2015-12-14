@@ -8,12 +8,24 @@ dotenv.load();
 const env = process.env;
 
 const plexOptions = {
-  hostname: env.PLEX_HOST,
-  port: env.PLEX_PORT,
-  username: env.PLEX_USERNAME,
-  password: env.PLEX_PASSWORD,
-  authToken: env.PLEX_TOKEN,
+  hostname: env.PLEX_SERVER_HOST,
+  port: env.PLEX_SERVER_PORT,
+  username: env.PLEX_SERVER_USERNAME,
+  password: env.PLEX_SERVER_PASSWORD,
+  authToken: env.PLEX_SERVER_TOKEN,
   device: env.PLEX_DEVICE,
+  options: {
+    identifier: '9ffb7743-cbd7-42ab-92fb-334f20ea57e6',
+    name: 'Jarvis',
+    product: 'Jarvis',
+    version: '0.0.1',
+    machineIdentifier: env.PLEX_SERVER_IDENTIFIER
+  }
+};
+
+const plexClientOptions = {
+  hostname: env.PLEX_PLAYER_HOST,
+  port: env.PLEX_PLAYER_PORT,
   options: {
     identifier: '9ffb7743-cbd7-42ab-92fb-334f20ea57e6',
     name: 'Jarvis',
@@ -22,7 +34,7 @@ const plexOptions = {
   }
 };
 
-const plexChannel = new PlexChannel(plexOptions);
+const plexChannel = new PlexChannel(plexOptions, plexClientOptions);
 const app = express();
 
 app.get('/', (req, res) => {
