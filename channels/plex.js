@@ -1,6 +1,7 @@
 import PlexApi from 'plex-api';
 import Promise from 'bluebird';
 import _ from 'lodash';
+import {stringifyParams} from '../helpers/url';
 
 export default class PlexChannel {
   constructor(plexOptions, clientOptions) {
@@ -24,11 +25,7 @@ export default class PlexChannel {
       offset,
       commandId: this.playerCommandId
     };
-
-    const paramsString = Object.keys(params).map(key => {
-      return `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`;
-    }).join('&');
-    const url = `/player/playback/playMedia?${paramsString}`;
+    const url = `/player/playback/playMedia?${stringifyParams(params)}`;
 
     return new Promise((resolve, reject) => {
       this.player.postQuery(url).then(({Response}) => {
