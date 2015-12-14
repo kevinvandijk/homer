@@ -40,6 +40,8 @@ const app = express();
 app.get('/', (req, res) => {
   plexChannel.startShow('Homeland').then(tvshows => {
     res.json(tvshows);
+  }, error => {
+    res.json(error);
   });
   // res.send('Hello World!');
 });

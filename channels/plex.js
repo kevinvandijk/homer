@@ -8,7 +8,9 @@ export default class PlexChannel {
 
     this.server = new PlexApi(plexOptions);
     this.server.authToken = plexOptions.authToken;
+
     this.player = new PlexApi(clientOptions);
+    this.playerCommandId = 0;
   }
 
   play(options) {
@@ -19,19 +21,29 @@ export default class PlexChannel {
       address: server.hostname,
       port: server.port,
       key: mediaKey,
-      offset
+      offset,
+      commandId: this.playerCommandId
     };
+
     const paramsString = Object.keys(params).map(key => {
       return `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`;
     }).join('&');
     const url = `/player/playback/playMedia?${paramsString}`;
 
-    this.player.postQuery(url).then(result => {
-      console.log('result');
-      console.log(result);
-    }, error => {
-      console.log('error');
-      console.error(error);
+    return new Promise((resolve, reject) => {
+      this.player.postQuery(url).then(({Response}) => {
+        const response = Response.attributes;
+        this.playerCommandId = this.playerCommandId + 1;
+
+        if (parseInt(response.code, 10) !== 200) {
+          reject(response);
+        } else {
+          resolve(response);
+        }
+      }, error => {
+        this.playerCommandId = this.playerCommandId + 1;
+        reject(error);
+      });
     });
   }
 
@@ -60,12 +72,15 @@ export default class PlexChannel {
       ).then(episodes => {
         const episode = this.findNextUnwatchedEpisode(episodes._children);
         if (episode) {
-          this.play({
+          return this.play({
             mediaKey: episode.key,
             offset: episode.viewOffset || 0
           });
+        } else {
+          return Promise.reject({reason: 'No unwatched episode found'});
         }
-        resolve(episode);
+      }).then(result => {
+        resolve(result);
       }).catch(e => {
         reject(e);
       });
