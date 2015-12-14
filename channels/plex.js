@@ -5,16 +5,15 @@ import _ from 'lodash';
 export default class PlexChannel {
   constructor(plexOptions, clientOptions) {
     clientOptions = clientOptions || plexOptions;
-    this.device = plexOptions.device;
 
-    this.plex = new PlexApi(plexOptions);
-    this.plex.authToken = plexOptions.authToken;
+    this.server = new PlexApi(plexOptions);
+    this.server.authToken = plexOptions.authToken;
     this.player = new PlexApi(clientOptions);
   }
 
   play(options) {
     const { mediaKey, offset } = options;
-    const server = this.plex;
+    const server = this.server;
     const params = {
       machineIdentifier: server.options.machineIdentifier,
       address: server.hostname,
@@ -44,11 +43,11 @@ export default class PlexChannel {
   }
 
   getShows() {
-    return this.plex.query('/library/sections/2/all');
+    return this.server.query('/library/sections/2/all');
   }
 
   getShowEpisodes(show) {
-    return this.plex.query(`/library/metadata/${show.ratingKey}/allLeaves`);
+    return this.server.query(`/library/metadata/${show.ratingKey}/allLeaves`);
   }
 
   startShow(name, callback) {
