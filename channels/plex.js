@@ -14,23 +14,20 @@ export default class PlexChannel {
     this.playerCommandId = 0;
   }
 
-  play(options) {
-    const { mediaKey, offset } = options;
+  playerCommand(command, options = {}) {
     const server = this.server;
-    const params = {
+    const params = Object.assign(options, {
       machineIdentifier: server.options.machineIdentifier,
       address: server.hostname,
       port: server.port,
-      key: mediaKey,
-      offset,
-      commandId: this.playerCommandId
-    };
-    const url = `/player/playback/playMedia?${stringifyParams(params)}`;
+      commandId: this.playerCommandId,
+    });
+
+    const url = `/player/playback/${command}?${stringifyParams(params)}`;
 
     return new Promise((resolve, reject) => {
       this.player.postQuery(url).then(({Response}) => {
         const response = Response.attributes;
-        this.playerCommandId = this.playerCommandId + 1;
 
         if (parseInt(response.code, 10) !== 200) {
           reject(response);
@@ -38,10 +35,27 @@ export default class PlexChannel {
           resolve(response);
         }
       }, error => {
-        this.playerCommandId = this.playerCommandId + 1;
         reject(error);
       });
+
+      this.playerCommandId = this.playerCommandId + 1;
     });
+  }
+
+  play(options) {
+    const { mediaKey, offset } = options;
+    return this.playerCommand('playMedia', {
+      key: mediaKey,
+      offset
+    });
+  }
+
+  pause() {
+    return this.playerCommand('pause');
+  }
+
+  resume() {
+    return this.playerCommand('play');
   }
 
   findNextUnwatchedEpisode(episodes, options = {partiallySeen: true}) {

@@ -46,6 +46,16 @@ app.get('/', (req, res) => {
   // res.send('Hello World!');
 });
 
+app.get('/pause', (req, res) => {
+  plexChannel.pause();
+  res.json({});
+});
+
+app.get('/resume', (req, res) => {
+  plexChannel.resume();
+  res.json({});
+});
+
 const server = app.listen(3000, () => {
   const host = server.address().address;
   const port = server.address().port;
