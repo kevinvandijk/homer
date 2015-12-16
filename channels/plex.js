@@ -14,48 +14,52 @@ export default class PlexChannel {
     this.playerCommandId = 0;
   }
 
-  playerCommand(command, options = {}) {
-    const server = this.server;
-    const params = Object.assign(options, {
-      machineIdentifier: server.options.machineIdentifier,
-      address: server.hostname,
-      port: server.port,
-      commandId: this.playerCommandId,
-    });
-
-    const url = `/player/playback/${command}?${stringifyParams(params)}`;
-
-    return new Promise((resolve, reject) => {
-      this.player.postQuery(url).then(({Response}) => {
-        const response = Response.attributes;
-
-        if (parseInt(response.code, 10) !== 200) {
-          reject(response);
-        } else {
-          resolve(response);
-        }
-      }, error => {
-        reject(error);
-      });
-
-      this.playerCommandId = this.playerCommandId + 1;
-    });
-  }
-
   play(options) {
     const { mediaKey, offset } = options;
-    return this.playerCommand('playMedia', {
+    return this._playerCommand('playMedia', {
       key: mediaKey,
       offset
     });
   }
 
   pause() {
-    return this.playerCommand('pause');
+    return this._playerCommand('pause');
   }
 
   resume() {
-    return this.playerCommand('play');
+    return this._playerCommand('play');
+  }
+
+  rewind() {
+    return this._playerCommand('rewind');
+  }
+
+  fastForward() {
+    return this._playerCommand('fastForward');
+  }
+
+  stepForward() {
+    return this._playerCommand('stepForward');
+  }
+
+  stepBack() {
+    return this._playerCommand('stepBack');
+  }
+
+  bigStepForward() {
+    return this._playerCommand('bigStepForward');
+  }
+
+  bigStepBack() {
+    return this._playerCommand('bigStepBack');
+  }
+
+  skipNext() {
+    return this._playerCommand('skipNext');
+  }
+
+  skipPrevious() {
+    return this._playerCommand('skipPrevious');
   }
 
   findNextUnwatchedEpisode(episodes, options = {partiallySeen: true}) {
@@ -95,6 +99,34 @@ export default class PlexChannel {
       }).catch(e => {
         reject(e);
       });
+    });
+  }
+
+  _playerCommand(command, options = {}) {
+    const server = this.server;
+    const params = Object.assign(options, {
+      machineIdentifier: server.options.machineIdentifier,
+      address: server.hostname,
+      port: server.port,
+      commandId: this.playerCommandId,
+    });
+
+    const url = `/player/playback/${command}?${stringifyParams(params)}`;
+
+    return new Promise((resolve, reject) => {
+      this.player.postQuery(url).then(({Response}) => {
+        const response = Response.attributes;
+
+        if (parseInt(response.code, 10) !== 200) {
+          reject(response);
+        } else {
+          resolve(response);
+        }
+      }, error => {
+        reject(error);
+      });
+
+      this.playerCommandId = this.playerCommandId + 1;
     });
   }
 }
