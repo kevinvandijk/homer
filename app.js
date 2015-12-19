@@ -3,6 +3,7 @@ import PlexListener from './listeners/plex';
 import hueChannel from './channels/hue';
 import PlexChannel from './channels/plex';
 import express from 'express';
+import alexaListener from './listeners/alexa';
 
 dotenv.load();
 const env = process.env;
@@ -62,6 +63,8 @@ const server = app.listen(3000, () => {
 
   console.log(`App listening at http://${host}:${port}`);
 });
+
+alexaListener();
 
 // (function app() {
 //   const hue = hueChannel({

@@ -1,0 +1,13 @@
+{
+  "name": "Homer-Alexa-Plex",
+  "version": "0.0.1",
+  "description": "Plex intents for Homer",
+  "main": "index.js",
+  "author": "Kevin van Dijk",
+  "license": "",
+  "dependencies": {
+    "alexa-app": "^2.2.0",
+    "babel-core": "^6.3.21",
+    "babel-preset-es2015": "^6.3.13"
+  }
+}
