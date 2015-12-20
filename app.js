@@ -3,6 +3,7 @@ import PlexListener from './listeners/plex';
 import hueChannel from './channels/hue';
 import PlexChannel from './channels/plex';
 import express from 'express';
+import bodyParser from 'body-parser';
 
 dotenv.load();
 const env = process.env;
@@ -37,6 +38,8 @@ const plexClientOptions = {
 const plexChannel = new PlexChannel(plexOptions, plexClientOptions);
 const app = express();
 
+app.use(bodyParser.json());
+
 app.get('/', (req, res) => {
   plexChannel.startShow('Homeland').then(tvshows => {
     res.json(tvshows);
@@ -55,6 +58,21 @@ app.get('/resume', (req, res) => {
   plexChannel.resume();
   res.json({});
 });
+
+app.post('/api/plex/start', (req, res) => {
+  console.log('start some show', req.body.name);
+  plexChannel.startShow('Homeland').then(() => {
+    res.json({success: true});
+  }, function(error) {
+    console.log('what happened?', error);
+    if (error.reason) {
+      res.json({success: false, reason: error.reason});
+    } else {
+      res.json({success: false});
+    }
+  });
+});
+
 
 const server = app.listen(3000, () => {
   const host = server.address().address;
