@@ -2,6 +2,8 @@ import PlexApi from 'plex-api';
 import Promise from 'bluebird';
 import _ from 'lodash';
 import {stringifyParams} from '../helpers/url';
+import FuzzySearch from 'fuzzysearch-js';
+import levenshteinFS from 'fuzzysearch-js/js/modules/LevenshteinFS';
 
 export default class PlexChannel {
   constructor(plexOptions, clientOptions) {
@@ -77,12 +79,51 @@ export default class PlexChannel {
     return this.server.query(`/library/metadata/${show.ratingKey}/allLeaves`);
   }
 
+  findShow(name, options = {}) {
+    return new Promise((resolve, reject) => {
+      this.getShows().then(results => {
+        return results._children || [];
+      }).then(tvshows => {
+        // TODO: split off in separate functions
+        let show;
+        if (options.fuzzy) {
+          try {
+            const fuzzySearch = new FuzzySearch(tvshows, {
+              minimumScore: 200,
+              caseSensitive: false,
+              returnEmptyArray: true,
+              termPath: 'title'
+            });
+            fuzzySearch.addModule(levenshteinFS({'maxDistanceTolerance': 3, 'factor': 3}));
+
+            const result = fuzzySearch.search(name);
+
+            if (result.length) {
+              show = result[0].value;
+            }
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          show = _(tvshows).find(tvshow =>
+            tvshow.title.toLowerCase() === name.toLowerCase()
+          );
+        }
+
+        if (show) {
+          return resolve(show);
+        } else {
+          const error = new Error('No show found');
+          error.type = 'no-show-found';
+          return reject(error);
+        }
+      });
+    });
+  }
+
   startShow(name, callback) {
     return new Promise((resolve, reject) => {
-      this.getShows().then(tvshows => {
-        const show = _(tvshows._children).findWhere({title: name});
-        return Promise.resolve(show);
-      }).then(
+      this.findShow(name).then(
         this.getShowEpisodes.bind(this)
       ).then(episodes => {
         const episode = this.findNextUnwatchedEpisode(episodes._children);
