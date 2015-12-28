@@ -5,6 +5,11 @@ import {stringifyParams} from '../helpers/url';
 import FuzzySearch from 'fuzzysearch-js';
 import levenshteinFS from 'fuzzysearch-js/js/modules/LevenshteinFS';
 
+function createError(type, description) {
+  const err = new Error(description || type);
+  err.type = type;
+  return err;
+}
 export default class PlexChannel {
   constructor(plexOptions, clientOptions) {
     clientOptions = clientOptions || plexOptions;
@@ -64,19 +69,28 @@ export default class PlexChannel {
     return this._playerCommand('skipPrevious');
   }
 
-  findNextUnwatchedEpisode(episodes, options = {partiallySeen: true}) {
-    if (options.partiallySeen) {
-      return episodes.find(episode => !!episode.viewOffset || !!!episode.lastViewedAt);
-    }
-    return _(episodes).find(episode => !!!episode.lastViewedAt);
-  }
-
   getShows() {
     return this.server.query('/library/sections/2/all');
   }
 
-  getShowEpisodes(show) {
-    return this.server.query(`/library/metadata/${show.ratingKey}/allLeaves`);
+  getEpisodes(showOrKey) {
+    const key = (typeof showOrKey === 'object') ? showOrKey.ratingKey : showOrKey;
+    return this.server.query(`/library/metadata/${key}/allLeaves`).then(result => result._children || []);
+  }
+
+  getNextUnwatchedEpisode(showOrKey, options = {partiallySeen: true}) {
+    return this.getEpisodes(showOrKey).then(episodes => {
+      let nextEpisode;
+      if (options.partiallySeen) {
+        nextEpisode = episodes.find(episode => !!episode.viewOffset || !!!episode.lastViewedAt);
+      } else {
+        nextEpisode = episodes.find(episode => !!!episode.lastViewedAt);
+      }
+
+      return nextEpisode
+        ? Promise.resolve(nextEpisode)
+        : Promise.reject(createError('no-unwatched-episode-found'));
+    });
   }
 
   findShow(name, options = {}) {
@@ -94,7 +108,7 @@ export default class PlexChannel {
               returnEmptyArray: true,
               termPath: 'title'
             });
-            fuzzySearch.addModule(levenshteinFS({'maxDistanceTolerance': 3, 'factor': 3}));
+            fuzzySearch.addModule(levenshteinFS({'maxDistanceTolerance': 20, 'factor': 3}));
 
             const result = fuzzySearch.search(name);
 
@@ -121,26 +135,8 @@ export default class PlexChannel {
     });
   }
 
-  startShow(name, callback) {
-    return new Promise((resolve, reject) => {
-      this.findShow(name).then(
-        this.getShowEpisodes.bind(this)
-      ).then(episodes => {
-        const episode = this.findNextUnwatchedEpisode(episodes._children);
-        if (episode) {
-          return this.play({
-            mediaKey: episode.key,
-            offset: episode.viewOffset || 0
-          });
-        } else {
-          return Promise.reject({reason: 'No unwatched episode found'});
-        }
-      }).then(result => {
-        resolve(result);
-      }).catch(e => {
-        reject(e);
-      });
-    });
+  startShow(showOrKey, options) {
+    return Promise.resolve();
   }
 
   _playerCommand(command, options = {}) {
