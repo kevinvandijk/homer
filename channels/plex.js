@@ -2,8 +2,7 @@ import PlexApi from 'plex-api';
 import Promise from 'bluebird';
 import _ from 'lodash';
 import {stringifyParams} from '../helpers/url';
-import FuzzySearch from 'fuzzysearch-js';
-import levenshteinFS from 'fuzzysearch-js/js/modules/LevenshteinFS';
+import {fuzzySearch, normalSearch} from '../helpers/search';
 
 function createError(type, description) {
   const err = new Error(description || type);
@@ -96,41 +95,13 @@ export default class PlexChannel {
   }
 
   findShow(name, options = {}) {
-    return new Promise((resolve, reject) => {
-      this.getShows().then(tvshows => {
-        // TODO: split off in separate functions
-        let show;
-        if (options.fuzzy) {
-          try {
-            const fuzzySearch = new FuzzySearch(tvshows, {
-              minimumScore: 200,
-              caseSensitive: false,
-              returnEmptyArray: true,
-              termPath: 'title'
-            });
-            // TODO: Make configurable:
-            fuzzySearch.addModule(levenshteinFS({'maxDistanceTolerance': 20, 'factor': 3}));
+    return this.getShows().then(tvshows => {
+      const shows = (options.fuzzy ? fuzzySearch(tvshows, name) : normalSearch(tvshows, name));
 
-            const result = fuzzySearch.search(name);
-
-            if (result.length) {
-              show = result[0].value;
-            }
-          } catch (e) {
-            reject(e);
-          }
-        } else {
-          show = _(tvshows).find(tvshow =>
-            tvshow.title.toLowerCase() === name.toLowerCase()
-          );
-        }
-
-        if (show) {
-          return resolve(show);
-        } else {
-          return reject(createError('no-show-found', 'No show found'));
-        }
-      });
+      return (shows
+        ? Promise.resolve(shows[0])
+        : Promise.reject(createError('no-show-found', 'No show found'))
+      );
     });
   }
 
