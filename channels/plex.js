@@ -127,9 +127,7 @@ export default class PlexChannel {
         if (show) {
           return resolve(show);
         } else {
-          const error = new Error('No show found');
-          error.type = 'no-show-found';
-          return reject(error);
+          return reject(createError('no-show-found', 'No show found'));
         }
       });
     });
