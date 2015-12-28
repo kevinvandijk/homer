@@ -108,6 +108,7 @@ export default class PlexChannel {
               returnEmptyArray: true,
               termPath: 'title'
             });
+            // TODO: Make configurable:
             fuzzySearch.addModule(levenshteinFS({'maxDistanceTolerance': 20, 'factor': 3}));
 
             const result = fuzzySearch.search(name);
