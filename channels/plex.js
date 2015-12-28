@@ -70,7 +70,9 @@ export default class PlexChannel {
   }
 
   getShows() {
-    return this.server.query('/library/sections/2/all');
+    return Promise.resolve(this.server.query('/library/sections/2/all')).then(results => {
+      return results._children || [];
+    });
   }
 
   getEpisodes(showOrKey) {
@@ -95,9 +97,7 @@ export default class PlexChannel {
 
   findShow(name, options = {}) {
     return new Promise((resolve, reject) => {
-      this.getShows().then(results => {
-        return results._children || [];
-      }).then(tvshows => {
+      this.getShows().then(tvshows => {
         // TODO: split off in separate functions
         let show;
         if (options.fuzzy) {
