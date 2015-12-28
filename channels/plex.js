@@ -74,6 +74,12 @@ export default class PlexChannel {
     });
   }
 
+  getMovies() {
+    return Promise.resolve(this.server.query('/library/sections/4/all')).then(results => {
+      return results._children || [];
+    });
+  }
+
   getEpisodes(showOrKey) {
     const key = (typeof showOrKey === 'object') ? showOrKey.ratingKey : showOrKey;
     return this.server.query(`/library/metadata/${key}/allLeaves`).then(result => result._children || []);
@@ -101,6 +107,17 @@ export default class PlexChannel {
       return (shows
         ? Promise.resolve(shows[0])
         : Promise.reject(createError('no-show-found', 'No show found'))
+      );
+    });
+  }
+
+  findMovie(name, options = {}) {
+    return this.getMovies().then(movies => {
+      const results = (options.fuzzy ? fuzzySearch(movies, name) : normalSearch(movies, name));
+
+      return (results
+        ? Promise.resolve(results[0])
+        : Promise.reject(createError('no-movie-found', `No movie found with name '${name}'`))
       );
     });
   }
