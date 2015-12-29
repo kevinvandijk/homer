@@ -56,24 +56,26 @@ app.get('/', (req, res) => {
 
 app.all('/api/plex/start', (req, res) => {
   const name = req.body.name;
-  const options = {fuzzy: true};
+  const options = {fuzzy: true, name};
 
-  plexChannel.findMedia(name, options).then(media => {
+  plexChannel.findMedia(options).then(media => {
     if (!media.length) return Promise.reject({type: 'no-media-found'});
 
+    const {title, type, ratingKey: key, studio} = media[0];
+    const data = {title, type, key, studio};
+
     if (media.length > 1) {
-      const {title, type, ratingKey} = media[0];
       const error = {
         type: 'not-certain',
-        suggestion: {
-          title,
-          type,
-          ratingKey
-        }
+        suggestion: data
       };
 
       return Promise.reject(error);
+    } else {
+      return Promise.resolve(data);
     }
+  }).then(data => {
+    res.json(data);
   }).catch(error => {
     let code = 400;
 

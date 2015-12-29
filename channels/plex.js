@@ -100,26 +100,26 @@ export default class PlexChannel {
   }
 
   // TODO: Refactor these 3 methods since they're basically all the same
-  findShow(name, options = {}) {
-    if (!name || !name.length) return Promise.reject(createError('no-name-specified'));
+  findShow(options = {}) {
+    if (!options.key && !options.name) return Promise.reject(createError('no-name-or-key-specified'));
 
     return this.getShows().then(tvshows => {
-      const shows = (options.fuzzy ? fuzzySearch(tvshows, name) : normalSearch(tvshows, name));
+      const shows = (options.fuzzy ? fuzzySearch(tvshows, options.name) : normalSearch(tvshows, options.name));
       return shows || [];
     });
   }
 
-  findMovie(name, options = {}) {
-    if (!name || !name.length) return Promise.reject(createError('no-name-specified'));
+  findMovie(options = {}) {
+    if (!options.key && !options.name) return Promise.reject(createError('no-name-or-key-specified'));
 
     return this.getMovies().then(movies => {
-      const results = (options.fuzzy ? fuzzySearch(movies, name) : normalSearch(movies, name));
+      const results = (options.fuzzy ? fuzzySearch(movies, options.name) : normalSearch(movies, options.name));
       return results || [];
     });
   }
 
-  findMedia(name, options = {}) {
-    if (!name || !name.length) return Promise.reject(createError('no-name-specified'));
+  findMedia(options = {}) {
+    if (!options.key && !options.name) return Promise.reject(createError('no-name-or-key-specified'));
 
     return Promise.all([
       this.getMovies(),
@@ -127,7 +127,7 @@ export default class PlexChannel {
     ]).then(([shows, movies]) => {
       return shows.concat(movies);
     }).then(media => {
-      const results = (options.fuzzy ? fuzzySearch(media, name) : normalSearch(media, name));
+      const results = (options.fuzzy ? fuzzySearch(media, options.name) : normalSearch(media, options.name));
       return results || [];
     });
   }
