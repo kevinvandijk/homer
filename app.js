@@ -64,7 +64,7 @@ app.all('/api/plex/start', (req, res) => {
     if (media.length > 1) {
       const {title, type, ratingKey} = media[0];
       const error = {
-        type: 'multiple-media-found',
+        type: 'not-certain',
         suggestion: {
           title,
           type,
