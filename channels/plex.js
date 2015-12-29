@@ -1,6 +1,5 @@
 import PlexApi from 'plex-api';
 import Promise from 'bluebird';
-import _ from 'lodash';
 import {stringifyParams} from '../helpers/url';
 import {fuzzySearch, normalSearch} from '../helpers/search';
 
@@ -100,25 +99,36 @@ export default class PlexChannel {
     });
   }
 
+  // TODO: Refactor these 3 methods since they're basically all the same
   findShow(name, options = {}) {
+    if (!name || !name.length) return Promise.reject(createError('no-name-specified'));
+
     return this.getShows().then(tvshows => {
       const shows = (options.fuzzy ? fuzzySearch(tvshows, name) : normalSearch(tvshows, name));
-
-      return (shows
-        ? Promise.resolve(shows[0])
-        : Promise.reject(createError('no-show-found', 'No show found'))
-      );
+      return shows || [];
     });
   }
 
   findMovie(name, options = {}) {
+    if (!name || !name.length) return Promise.reject(createError('no-name-specified'));
+
     return this.getMovies().then(movies => {
       const results = (options.fuzzy ? fuzzySearch(movies, name) : normalSearch(movies, name));
+      return results || [];
+    });
+  }
 
-      return (results
-        ? Promise.resolve(results[0])
-        : Promise.reject(createError('no-movie-found', `No movie found with name '${name}'`))
-      );
+  findMedia(name, options = {}) {
+    if (!name || !name.length) return Promise.reject(createError('no-name-specified'));
+
+    return Promise.all([
+      this.getMovies(),
+      this.getShows()
+    ]).then(([shows, movies]) => {
+      return shows.concat(movies);
+    }).then(media => {
+      const results = (options.fuzzy ? fuzzySearch(media, name) : normalSearch(media, name));
+      return results || [];
     });
   }
 
