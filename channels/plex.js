@@ -104,8 +104,12 @@ export default class PlexChannel {
     if (!options.key && !options.name) return Promise.reject(createError('no-name-or-key-specified'));
 
     return this.getShows().then(tvshows => {
-      const shows = (options.fuzzy ? fuzzySearch(tvshows, options.name) : normalSearch(tvshows, options.name));
-      return shows || [];
+      if (options.key) {
+        return [tvshows.find(show => parseInt(show.ratingKey, 10) === parseInt(options.key, 10))];
+      } else {
+        const shows = (options.fuzzy ? fuzzySearch(tvshows, options.name) : normalSearch(tvshows, options.name));
+        return shows || [];
+      }
     });
   }
 
@@ -113,8 +117,12 @@ export default class PlexChannel {
     if (!options.key && !options.name) return Promise.reject(createError('no-name-or-key-specified'));
 
     return this.getMovies().then(movies => {
-      const results = (options.fuzzy ? fuzzySearch(movies, options.name) : normalSearch(movies, options.name));
-      return results || [];
+      if (options.key) {
+        return [movies.find(movie => parseInt(movie.ratingKey, 10) === parseInt(options.key, 10))];
+      } else {
+        const results = (options.fuzzy ? fuzzySearch(movies, options.name) : normalSearch(movies, options.name));
+        return results || [];
+      }
     });
   }
 
@@ -127,8 +135,12 @@ export default class PlexChannel {
     ]).then(([shows, movies]) => {
       return shows.concat(movies);
     }).then(media => {
-      const results = (options.fuzzy ? fuzzySearch(media, options.name) : normalSearch(media, options.name));
-      return results || [];
+      if (options.key) {
+        return [media.find(item => parseInt(item.ratingKey, 10) === parseInt(options.key, 10))];
+      } else if (options.name) {
+        const results = (options.fuzzy ? fuzzySearch(media, options.name) : normalSearch(media, options.name));
+        return results || [];
+      }
     });
   }
 

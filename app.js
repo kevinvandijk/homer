@@ -55,8 +55,8 @@ app.get('/', (req, res) => {
 
 
 app.all('/api/plex/start', (req, res) => {
-  const name = req.body.name;
-  const options = {fuzzy: true, name};
+  const {name, key} = req.body;
+  const options = {fuzzy: true, name, key};
 
   plexChannel.findMedia(options).then(media => {
     if (!media.length) return Promise.reject({type: 'no-media-found'});
