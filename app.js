@@ -4,6 +4,7 @@ import hueChannel from './channels/hue';
 import PlexChannel from './channels/plex';
 import express from 'express';
 import bodyParser from 'body-parser';
+import Promise from 'bluebird';
 
 dotenv.load();
 const env = process.env;
@@ -41,35 +42,47 @@ const app = express();
 app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
-  plexChannel.startShow('Homeland').then(tvshows => {
-    res.json(tvshows);
+  plexChannel.findShow(req.query.show, {fuzzy: true}).then(tvshow => {
+    plexChannel.startShow(tvshow).then(result => {
+      res.json({result: result});
+    }).catch(error => {
+      res.json({error: error});
+    });
   }, error => {
-    res.json(error);
+    res.json({error: error});
   });
-  // res.send('Hello World!');
 });
 
-app.get('/pause', (req, res) => {
-  plexChannel.pause();
-  res.json({});
-});
 
-app.get('/resume', (req, res) => {
-  plexChannel.resume();
-  res.json({});
-});
+app.all('/api/plex/start', (req, res) => {
+  const name = req.body.name;
+  const options = {fuzzy: true};
 
-app.post('/api/plex/start', (req, res) => {
-  console.log('start some show', req.body.name);
-  plexChannel.startShow('Homeland').then(() => {
-    res.json({success: true});
-  }, function(error) {
-    console.log('what happened?', error);
-    if (error.reason) {
-      res.json({success: false, reason: error.reason});
-    } else {
-      res.json({success: false});
+  plexChannel.findMedia(name, options).then(media => {
+    if (!media.length) return Promise.reject({type: 'no-media-found'});
+
+    if (media.length > 1) {
+      const {title, type, ratingKey} = media[0];
+      const error = {
+        type: 'multiple-media-found',
+        suggestion: {
+          title,
+          type,
+          ratingKey
+        }
+      };
+
+      return Promise.reject(error);
     }
+  }).catch(error => {
+    let code = 400;
+
+    switch (error.type) {
+      case 'no-media-found':
+        code = 404;
+    }
+
+    res.status(code).json(error);
   });
 });
 
