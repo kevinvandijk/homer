@@ -76,6 +76,11 @@ app.all('/api/plex/start', (req, res) => {
     }
   }).then(media => {
     if (media.type === 'show') {
+      // find next unwatched episode
+      // if next unwatched is partially watched: ask to resume or to start next episode
+      // if next unwatched not watched: start
+      // if no unwatched episodes available: ask to restart series
+
       // TODO: Build way to get episode by key instead of hacky partiallySeen hack
       const options = {
         partiallySeen: !!!nextEpisode // Next episode should not be partially watched, so this works for now
@@ -138,10 +143,6 @@ app.all('/api/plex/start', (req, res) => {
           res.status(500).json('Error');
         }
       });
-      // find next unwatched episode
-      // if next unwatched is partially watched: ask to resume or to start next episode
-      // if next unwatched not watched: start
-      // if no unwatched episodes available: ask to restart series
     } else if (data.type === 'movie') {
       // see if movie was previously partially watched
       // if so: ask to resume or to restart
