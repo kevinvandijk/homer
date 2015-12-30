@@ -110,7 +110,7 @@ app.all('/api/plex/start', (req, res) => {
           return plexChannel.play({
             mediaKey: episode.key,
             offset: episode.viewOffset || 0
-          }).then(function(result) {
+          }).then(result => {
             return {
               status: 'playing',
               media: {
