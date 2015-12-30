@@ -84,7 +84,13 @@ export default class PlexChannel {
     return this.server.query(`/library/metadata/${key}/allLeaves`).then(result => result._children || []);
   }
 
-  getNextUnwatchedEpisode(showOrKey, options = {partiallySeen: true}) {
+  getFirstEpisode(showOrKey, options = {}) {
+    return this.getEpisodes(showOrKey).then(episodes => {
+      return episodes[0];
+    });
+  }
+
+  getNextUnwatchedEpisode(showOrKey, options = {}) {
     return this.getEpisodes(showOrKey).then(episodes => {
       let nextEpisode;
       if (options.partiallySeen) {
