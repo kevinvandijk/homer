@@ -55,7 +55,7 @@ app.get('/', (req, res) => {
 
 
 app.all('/api/plex/start', (req, res) => {
-  const {name, key} = req.body;
+  const {name, key, resume, nextEpisode, restart} = req.body;
   const options = {fuzzy: true, name, key};
 
   plexChannel.findMedia(options).then(media => {
@@ -74,8 +74,62 @@ app.all('/api/plex/start', (req, res) => {
     } else {
       return Promise.resolve(data);
     }
-  }).then(data => {
-    res.json(data);
+  }).then(media => {
+    if (media.type === 'show') {
+      const options = {
+        partiallySeen: !!!nextEpisode // Next episode should not be partially watched, so this works for now
+      };
+
+      const method = (restart ? 'getFirstEpisode' : 'getNextUnwatchedEpisode');
+
+      plexChannel[method].apply(plexChannel, [media.key, options]).then(episode => {
+        if (episode.viewOffset && !resume) {
+          const error = {
+            type: 'partially-watched-episode',
+            media: {
+              title: episode.title,
+              type: episode.type,
+              key: episode.ratingKey,
+              episode: episode.index,
+              season: episode.parentIndex,
+              originallyAvailableAt: episode.originallyAvailableAt,
+              show: media.title,
+              showKey: media.key
+            }
+          };
+
+          res.status(422).json(error);
+        } else {
+          // play it
+          res.json(episode);
+
+        }
+      }).catch(error => {
+        if (error.type === 'no-unwatched-episode-found') {
+          const response = {
+            type: 'no-unwatched-episode',
+            media: {
+              show: media.title,
+              showKey: media.key
+            }
+          };
+
+          res.status(422).json(response);
+        } else {
+          res.status(500).json('Error');
+        }
+      });
+      // find next unwatched episode
+      // if next unwatched is partially watched: ask to resume or to start next episode
+      // if next unwatched not watched: start
+      // if no unwatched episodes available: ask to restart series
+    } else if (data.type === 'movie') {
+      // see if movie was previously partially watched
+      // if so: ask to resume or to restart
+      // if not: start
+    }
+    // res.json(data);
+    // after starting, see if hue is on, if so, ask if it should be turned off or dimmed
   }).catch(error => {
     let code = 400;
 
