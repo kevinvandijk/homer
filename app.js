@@ -76,6 +76,7 @@ app.all('/api/plex/start', (req, res) => {
     }
   }).then(media => {
     if (media.type === 'show') {
+      // TODO: Build way to get episode by key instead of hacky partiallySeen hack
       const options = {
         partiallySeen: !!!nextEpisode // Next episode should not be partially watched, so this works for now
       };
@@ -101,9 +102,27 @@ app.all('/api/plex/start', (req, res) => {
           res.status(422).json(error);
         } else {
           // play it
-          res.json(episode);
-
+          return plexChannel.play({
+            mediaKey: episode.key,
+            offset: episode.viewOffset || 0
+          }).then(function(result) {
+            return {
+              status: 'playing',
+              media: {
+                title: episode.title,
+                type: episode.type,
+                key: episode.ratingKey,
+                episode: episode.index,
+                season: episode.parentIndex,
+                originallyAvailableAt: episode.originallyAvailableAt,
+                show: media.title,
+                showKey: media.key
+              }
+            };
+          });
         }
+      }).then(response => {
+        res.json(response);
       }).catch(error => {
         if (error.type === 'no-unwatched-episode-found') {
           const response = {
