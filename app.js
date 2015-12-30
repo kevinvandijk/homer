@@ -143,12 +143,48 @@ app.all('/api/plex/start', (req, res) => {
           res.status(500).json('Error');
         }
       });
-    } else if (data.type === 'movie') {
+    } else if (media.type === 'movie') {
       // see if movie was previously partially watched
       // if so: ask to resume or to restart
       // if not: start
+      plexChannel.findMovie({key: media.key}).then(results => {
+        const movie = results[0];
+
+        if (movie.viewOffset && (!resume || !restart)) {
+          const error = {
+            type: 'partially-watched-movie',
+            media: {
+              title: movie.title,
+              type: movie.type,
+              key: movie.ratingKey,
+              originallyAvailableAt: movie.originallyAvailableAt
+            }
+          };
+
+          res.status(422).json(error);
+        } else {
+          return plexChannel.play({
+            mediaKey: movie.key,
+            offset: (restart ? 0 : movie.viewOffset || 0)
+          }).then(result => {
+            return {
+              status: 'playing',
+              media: {
+                title: movie.title,
+                type: movie.type,
+                key: movie.ratingKey,
+                originallyAvailableAt: movie.originallyAvailableAt
+              }
+            };
+          });
+        }
+      }).then(response => {
+        res.json(response);
+      }).catch(error => {
+        res.status(500).json(error);
+      });
     }
-    // res.json(data);
+
     // after starting, see if hue is on, if so, ask if it should be turned off or dimmed
   }).catch(error => {
     let code = 400;
