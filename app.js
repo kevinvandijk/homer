@@ -89,24 +89,7 @@ app.all('/api/plex/start', (req, res) => {
       const method = (restart ? 'getFirstEpisode' : 'getNextUnwatchedEpisode');
 
       plexChannel[method].apply(plexChannel, [media.key, options]).then(episode => {
-        if (episode.viewOffset && !resume) {
-          const error = {
-            type: 'partially-watched-episode',
-            media: {
-              title: episode.title,
-              type: episode.type,
-              key: episode.ratingKey,
-              episode: episode.index,
-              season: episode.parentIndex,
-              originallyAvailableAt: episode.originallyAvailableAt,
-              show: media.title,
-              showKey: media.key
-            }
-          };
-
-          res.status(422).json(error);
-        } else {
-          // play it
+        if (resume || !episode.viewOffset) {
           return plexChannel.play({
             mediaKey: episode.key,
             offset: episode.viewOffset || 0
@@ -124,10 +107,26 @@ app.all('/api/plex/start', (req, res) => {
                 showKey: media.key
               }
             };
+          }).then(response => {
+            res.json(response);
           });
+        } else {
+          const error = {
+            type: 'partially-watched-episode',
+            media: {
+              title: episode.title,
+              type: episode.type,
+              key: episode.ratingKey,
+              episode: episode.index,
+              season: episode.parentIndex,
+              originallyAvailableAt: episode.originallyAvailableAt,
+              show: media.title,
+              showKey: media.key
+            }
+          };
+
+          res.status(422).json(error);
         }
-      }).then(response => {
-        res.json(response);
       }).catch(error => {
         if (error.type === 'no-unwatched-episode-found') {
           const response = {
@@ -150,19 +149,7 @@ app.all('/api/plex/start', (req, res) => {
       plexChannel.findMovie({key: media.key}).then(results => {
         const movie = results[0];
 
-        if (movie.viewOffset && (!resume || !restart)) {
-          const error = {
-            type: 'partially-watched-movie',
-            media: {
-              title: movie.title,
-              type: movie.type,
-              key: movie.ratingKey,
-              originallyAvailableAt: movie.originallyAvailableAt
-            }
-          };
-
-          res.status(422).json(error);
-        } else {
+        if (resume || restart || !movie.viewOffset) {
           return plexChannel.play({
             mediaKey: movie.key,
             offset: (restart ? 0 : movie.viewOffset || 0)
@@ -176,10 +163,22 @@ app.all('/api/plex/start', (req, res) => {
                 originallyAvailableAt: movie.originallyAvailableAt
               }
             };
+          }).then(response => {
+            res.json(response);
           });
+        } else {
+          const error = {
+            type: 'partially-watched-movie',
+            media: {
+              title: movie.title,
+              type: movie.type,
+              key: movie.ratingKey,
+              originallyAvailableAt: movie.originallyAvailableAt
+            }
+          };
+
+          res.status(422).json(error);
         }
-      }).then(response => {
-        res.json(response);
       }).catch(error => {
         res.status(500).json(error);
       });
