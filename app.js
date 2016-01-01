@@ -132,8 +132,8 @@ app.all('/api/plex/start', (req, res) => {
           const response = {
             type: 'no-unwatched-episode',
             media: {
-              show: media.title,
-              showKey: media.key
+              title: media.title,
+              key: media.key
             }
           };
 
