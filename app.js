@@ -5,6 +5,7 @@ import PlexChannel from './channels/plex';
 import express from 'express';
 import bodyParser from 'body-parser';
 import Promise from 'bluebird';
+import numbered from 'numbered';
 
 dotenv.load();
 const env = process.env;
@@ -53,6 +54,37 @@ app.get('/', (req, res) => {
   });
 });
 
+// TODO: Figure out way better routes for this and generalize it more:
+// Maybe this should go into the homer-alexa app instead since it does number to word mapping
+app.get('/api/plex/dictionary', (req, res) => {
+  Promise.all([plexChannel.getMovies(), plexChannel.getShows()]).then(([movies, shows]) => {
+    const media = movies.concat(shows).map(item => {
+      let title = item.title.toLowerCase();
+      // Remove anything between parenthesis () in the end of the title, like (2010) and stuff
+      title = title.replace(/\(.+\)\s*$/, '');
+      // Replace non-word characters at the beginning of the title because Alexa can't handle those
+      title = title.replace(/^\W/, '');
+      // Replace semicolons and the like, Alexa can't handle those either
+      title = title.replace(/:|;|,/g, '');
+      // Try to replace dots that are not used as an abbreviation:
+      title = title.replace(/(\.)\w/g, function($0) {
+        return $0.replace('.', '');
+      });
+      // Replace ampersands with words:
+      title = title.replace('&', 'and');
+      // Remove weird hyphens and replace with normal ones:
+      title = title.replace(/–|·/g, '-');
+      // Regex info: http://stackoverflow.com/questions/13636997/extract-all-numbers-from-string-in-javascript
+      title = title.replace(/([-+]?\d+(\.\d+)?)/g, function($0) {
+        return numbered.stringify($0);
+      });
+
+      return title.trim();
+    });
+
+    res.json({media});
+  });
+});
 
 app.all('/api/plex/start', (req, res) => {
   const {name, key, resume, nextEpisode, restart} = req.body;

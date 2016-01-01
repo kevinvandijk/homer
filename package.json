@@ -16,6 +16,7 @@
     "fuzzysearch-js": "^0.2.0",
     "lodash": "^3.10.1",
     "node-hue-api": "0.2.6",
+    "numbered": "^1.0.0",
     "plex-api": "^3.2.0",
     "underscore": "^1.8.3"
   },
