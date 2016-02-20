@@ -142,7 +142,8 @@ export default class PlexChannel {
       return shows.concat(movies);
     }).then(media => {
       if (options.key) {
-        return [media.find(item => parseInt(item.ratingKey, 10) === parseInt(options.key, 10))];
+        const foundMedia = media.find(item => parseInt(item.ratingKey, 10) === parseInt(options.key, 10));
+        return foundMedia ? [foundMedia] : [];
       } else if (options.name) {
         const results = (options.fuzzy ? fuzzySearch(media, options.name) : normalSearch(media, options.name));
         return results || [];
