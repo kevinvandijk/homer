@@ -42,18 +42,6 @@ const app = express();
 
 app.use(bodyParser.json());
 
-app.get('/', (req, res) => {
-  plexChannel.findShow(req.query.show, {fuzzy: true}).then(tvshow => {
-    plexChannel.startShow(tvshow).then(result => {
-      res.json({result: result});
-    }).catch(error => {
-      res.json({error: error});
-    });
-  }, error => {
-    res.json({error: error});
-  });
-});
-
 // TODO: Figure out way better routes for this and generalize it more:
 // Maybe this should go into the homer-alexa app instead since it does number to word mapping
 app.get('/api/plex/dictionary', async function(req, res) {
