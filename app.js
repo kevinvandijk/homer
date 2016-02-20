@@ -56,8 +56,9 @@ app.get('/', (req, res) => {
 
 // TODO: Figure out way better routes for this and generalize it more:
 // Maybe this should go into the homer-alexa app instead since it does number to word mapping
-app.get('/api/plex/dictionary', (req, res) => {
-  Promise.all([plexChannel.getMovies(), plexChannel.getShows()]).then(([movies, shows]) => {
+app.get('/api/plex/dictionary', async function(req, res) {
+  try {
+    const [movies, shows] = await Promise.all([plexChannel.getMovies(), plexChannel.getShows()]);
     const media = movies.concat(shows).map(item => {
       let title = item.title.toLowerCase();
       // Remove anything between parenthesis () in the end of the title, like (2010) and stuff
@@ -83,6 +84,10 @@ app.get('/api/plex/dictionary', (req, res) => {
     });
 
     res.json({media});
+  } catch (error) {
+    res.json({error: error});
+  }
+});
   });
 });
 

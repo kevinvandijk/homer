@@ -27,6 +27,7 @@
     "dev": "./node_modules/.bin/nodemon"
   },
   "devDependencies": {
+    "babel-eslint": "^4.1.8",
     "nodemon": "^1.8.1"
   }
 }
