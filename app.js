@@ -88,152 +88,60 @@ app.get('/api/plex/dictionary', async function(req, res) {
     res.json({error: error});
   }
 });
-  });
+
+app.all('/api/plex/find', async function(req, res) {
+  const { name } = req.query;
+  const limit = req.query.limit || 3;
+  const options = { fuzzy: true, name };
+  const media = await plexChannel.findMedia(options);
+  if (!media.length) return res.status(404).json(media);
+
+  res.json({ data: media.slice(0, limit) });
 });
 
-app.all('/api/plex/start', (req, res) => {
-  const {name, key, resume, nextEpisode, restart} = req.body;
-  const options = {fuzzy: true, name, key};
+app.all('/api/plex/play', async function(req, res) {
+  const mediaKey = req.query.key;
+  const resume = req.query.resume || false;
+  let media = await plexChannel.findMedia({ key: mediaKey });
+  if (!media.length) {
+    return res.status(404).json('Could not find media');
+  }
 
-  plexChannel.findMedia(options).then(media => {
-    if (!media.length) return Promise.reject({type: 'no-media-found'});
+  media = media[0];
 
-    const {title, type, ratingKey: key, studio} = media[0];
-    const data = {title, type, key, studio};
+  if (media.type === 'show') {
+    let episode;
 
-    if (media.length > 1) {
-      const error = {
-        type: 'not-certain',
-        suggestion: data
-      };
-
-      return Promise.reject(error);
-    } else {
-      return Promise.resolve(data);
+    try {
+      episode = await plexChannel.getNextUnwatchedEpisode(media, { partiallySeen: true });
+    } catch (err) {
+      // Add links to first episode
+      return res.status(500).json(err);
     }
-  }).then(media => {
-    if (media.type === 'show') {
-      // find next unwatched episode
-      // if next unwatched is partially watched: ask to resume or to start next episode
-      // if next unwatched not watched: start
-      // if no unwatched episodes available: ask to restart series
 
-      // TODO: Build way to get episode by key instead of hacky partiallySeen hack
-      const options = {
-        partiallySeen: !!!nextEpisode // Next episode should not be partially watched, so this works for now
-      };
-
-      const method = (restart ? 'getFirstEpisode' : 'getNextUnwatchedEpisode');
-
-      plexChannel[method].apply(plexChannel, [media.key, options]).then(episode => {
-        if (resume || !episode.viewOffset) {
-          return plexChannel.play({
-            mediaKey: episode.key,
-            offset: episode.viewOffset || 0
-          }).then(result => {
-            return {
-              status: 'playing',
-              media: {
-                title: episode.title,
-                type: episode.type,
-                key: episode.ratingKey,
-                episode: episode.index,
-                season: episode.parentIndex,
-                originallyAvailableAt: episode.originallyAvailableAt,
-                show: media.title,
-                showKey: media.key
-              }
-            };
-          }).then(response => {
-            res.json(response);
-          });
-        } else {
-          const error = {
-            type: 'partially-watched-episode',
-            media: {
-              title: episode.title,
-              type: episode.type,
-              key: episode.ratingKey,
-              episode: episode.index,
-              season: episode.parentIndex,
-              originallyAvailableAt: episode.originallyAvailableAt,
-              show: media.title,
-              showKey: media.key
-            }
-          };
-
-          res.status(422).json(error);
+    if (episode.viewOffset && !resume) {
+      return res.status(500).json({
+        error: {
+          type: 'partially-watched-episode',
+          episode
         }
-      }).catch(error => {
-        if (error.type === 'no-unwatched-episode-found') {
-          const response = {
-            type: 'no-unwatched-episode',
-            media: {
-              title: media.title,
-              key: media.key
-            }
-          };
-
-          res.status(422).json(response);
-        } else {
-          res.status(500).json('Error');
-        }
-      });
-    } else if (media.type === 'movie') {
-      // see if movie was previously partially watched
-      // if so: ask to resume or to restart
-      // if not: start
-      plexChannel.findMovie({key: media.key}).then(results => {
-        const movie = results[0];
-
-        if (resume || restart || !movie.viewOffset) {
-          return plexChannel.play({
-            mediaKey: movie.key,
-            offset: (restart ? 0 : movie.viewOffset || 0)
-          }).then(result => {
-            return {
-              status: 'playing',
-              media: {
-                title: movie.title,
-                type: movie.type,
-                key: movie.ratingKey,
-                originallyAvailableAt: movie.originallyAvailableAt
-              }
-            };
-          }).then(response => {
-            res.json(response);
-          });
-        } else {
-          const error = {
-            type: 'partially-watched-movie',
-            media: {
-              title: movie.title,
-              type: movie.type,
-              key: movie.ratingKey,
-              originallyAvailableAt: movie.originallyAvailableAt
-            }
-          };
-
-          res.status(422).json(error);
-        }
-      }).catch(error => {
-        res.status(500).json(error);
       });
     }
 
-    // after starting, see if hue is on, if so, ask if it should be turned off or dimmed
-  }).catch(error => {
-    let code = 400;
+    try {
+      await plexChannel.play({
+        mediaKey: episode.key,
+        offset: episode.viewOffset
+      });
 
-    switch (error.type) {
-      case 'no-media-found':
-        code = 404;
+      res.status(200).json('ok');
+    } catch (err) {
+      return res.status(500).json(err);
     }
-
-    res.status(code).json(error);
-  });
+  } else {
+    res.json(media);
+  }
 });
-
 
 const server = app.listen(3000, () => {
   const host = server.address().address;
