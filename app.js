@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import PlexListener from './listeners/plex';
 import hueChannel from './channels/hue';
 import PlexChannel from './channels/plex';
 import express from 'express';
