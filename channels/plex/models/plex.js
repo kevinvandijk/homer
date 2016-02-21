@@ -67,6 +67,10 @@ export default class PlexChannel {
     return this._playerCommand('skipPrevious');
   }
 
+  stop() {
+    return this._playerCommand('stop');
+  }
+
   getShows() {
     return Promise.resolve(this.server.query('/library/sections/2/all')).then(results => {
       return results._children || [];

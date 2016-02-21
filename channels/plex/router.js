@@ -4,4 +4,6 @@ import * as controller from './controller';
 export default router()
   .get('/dictionary', controller.dictionary)
   .get('/find', controller.find)
-  .get('/play', controller.play);
+  .get('/play', controller.play)
+  .get('/stop', controller.stop)
+  .get('/pause', controller.pause);

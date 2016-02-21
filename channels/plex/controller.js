@@ -120,11 +120,29 @@ export async function play(ctx) {
         offset: episode.viewOffset
       });
 
-      ctx.status = 200;
+      ctx.body = plexSerializer(episode);
     } catch (err) {
       ctx.throw(500, err);
     }
   } else {
     ctx.body = media;
+  }
+}
+
+export async function stop(ctx) {
+  try {
+    await plex.stop();
+    ctx.status = 200;
+  } catch (err) {
+    ctx.throw(500, err);
+  }
+}
+
+export async function pause(ctx) {
+  try {
+    await plex.pause();
+    ctx.status = 200;
+  } catch (err) {
+    ctx.throw(500, err);
   }
 }

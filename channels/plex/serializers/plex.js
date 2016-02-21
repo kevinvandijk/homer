@@ -1,7 +1,7 @@
 import { pick, isArray } from 'lodash';
 
 function serialize(mediaItem) {
-  const attributes = pick(mediaItem, ['key', 'title', 'tagline', 'duration']);
+  const attributes = pick(mediaItem, ['key', 'title', 'tagline', 'duration', 'viewOffset']);
   return {
     id: mediaItem.ratingKey,
     type: mediaItem.type,
