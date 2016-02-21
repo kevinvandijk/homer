@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import Plex from './models/plex';
 import Promise from 'bluebird';
 import numbered from 'numbered';
+import plexSerializer from './serializers/plex';
 
 dotenv.load();
 const env = process.env;
@@ -76,7 +77,12 @@ export async function find(ctx) {
   const options = { fuzzy: true, name };
   const media = await plex.findMedia(options);
 
-  ctx.body = { data: media.slice(0, limit) };
+  ctx.body = {
+    data: plexSerializer(media.slice(0, limit)),
+    meta: {
+      total: media.length
+    }
+  };
 }
 
 export async function play(ctx) {
@@ -114,7 +120,7 @@ export async function play(ctx) {
         offset: episode.viewOffset
       });
 
-      ctx.body = 'ok';
+      ctx.status = 200;
     } catch (err) {
       ctx.throw(500, err);
     }
