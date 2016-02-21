@@ -67,11 +67,11 @@ export async function find(options) {
 }
 
 export async function play(key, options = {}) {
-  if (!key) throw new Error('No key specified');
+  if (!key) throw new Error('no-key-specified');
   const resume = options.resume || false;
 
   let media = await plex.findMedia({ key: key });
-  if (!media.length) throw new Error('Could not find media');
+  if (!media.length) throw new Error('not-found');
 
   media = media[0];
 
@@ -84,7 +84,7 @@ async function playShow(media, resume) {
   const episode = await plex.getNextUnwatchedEpisode(media, { partiallySeen: true });
 
   if (episode.viewOffset && !resume) {
-    throw new Error('Found partially watched episode');
+    throw new Error('partially-watched');
   }
 
   await plex.play({

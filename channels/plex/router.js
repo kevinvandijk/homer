@@ -12,12 +12,7 @@ export default router()
 // TODO: Figure out way better routes for this and generalize it more:
 // Maybe this should go into the homer-alexa app instead since it does number to word mapping
 async function dictionary(ctx) {
-  try {
-    dictionary = await actions.getDictionary();
-    ctx.body = dictionary;
-  } catch (error) {
-    ctx.throw(500, error);
-  }
+  ctx.body = await actions.getDictionary();
 }
 
 async function find(ctx) {
@@ -36,26 +31,21 @@ async function find(ctx) {
 async function play(ctx) {
   try {
     const episode = await actions.play(ctx.query.key, { resume: ctx.query.resume });
-    ctx.body = plexSerializer(episode);
+    ctx.body = {
+      data: plexSerializer(episode)
+    };
   } catch (err) {
-    ctx.throw(500, err);
+    const status = err.message === 'not-found' ? 404 : 412;
+    ctx.throw(status, err);
   }
 }
 
 async function stop(ctx) {
-  try {
-    await actions.stop();
-    ctx.status = 200;
-  } catch (err) {
-    ctx.throw(500, err);
-  }
+  await actions.stop();
+  ctx.status = 200;
 }
 
 async function pause(ctx) {
-  try {
-    await actions.pause();
-    ctx.status = 200;
-  } catch (err) {
-    ctx.throw(500, err);
-  }
+  await actions.pause();
+  ctx.status = 200;
 }
