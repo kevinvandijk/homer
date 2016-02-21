@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import PlexController from './model';
+import Plex from './models/plex';
 import Promise from 'bluebird';
 import numbered from 'numbered';
 
@@ -33,13 +33,13 @@ const plexClientOptions = {
   }
 };
 
-const plexController = new PlexController(plexOptions, plexClientOptions);
+const plex = new Plex(plexOptions, plexClientOptions);
 
 // TODO: Figure out way better routes for this and generalize it more:
 // Maybe this should go into the homer-alexa app instead since it does number to word mapping
 export async function dictionary(ctx) {
   try {
-    const [movies, shows] = await Promise.all([plexController.getMovies(), plexController.getShows()]);
+    const [movies, shows] = await Promise.all([plex.getMovies(), plex.getShows()]);
     const media = movies.concat(shows).map(item => {
       let title = item.title.toLowerCase();
       // Remove anything between parenthesis () in the end of the title, like (2010) and stuff
@@ -74,7 +74,7 @@ export async function find(ctx) {
   const name = ctx.query.name;
   const limit = ctx.query.limit || 3;
   const options = { fuzzy: true, name };
-  const media = await plexController.findMedia(options);
+  const media = await plex.findMedia(options);
 
   ctx.body = { data: media.slice(0, limit) };
 }
@@ -82,7 +82,7 @@ export async function find(ctx) {
 export async function play(ctx) {
   const mediaKey = ctx.query.key;
   const resume = ctx.query.resume || false;
-  let media = await plexController.findMedia({ key: mediaKey });
+  let media = await plex.findMedia({ key: mediaKey });
   if (!media.length) {
     ctx.throw(404, 'Could not find media');
   }
@@ -93,7 +93,7 @@ export async function play(ctx) {
     let episode;
 
     try {
-      episode = await plexController.getNextUnwatchedEpisode(media, { partiallySeen: true });
+      episode = await plex.getNextUnwatchedEpisode(media, { partiallySeen: true });
     } catch (err) {
       // Add links to first episode
       ctx.throw(500, err);
@@ -109,7 +109,7 @@ export async function play(ctx) {
     }
 
     try {
-      await plexController.play({
+      await plex.play({
         mediaKey: episode.key,
         offset: episode.viewOffset
       });
