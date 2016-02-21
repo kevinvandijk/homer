@@ -1,10 +1,12 @@
 import dotenv from 'dotenv';
-import hueChannel from './channels/hue';
 import PlexChannel from './channels/plex';
-import express from 'express';
-import bodyParser from 'body-parser';
 import Promise from 'bluebird';
 import numbered from 'numbered';
+
+import Koa from 'koa';
+import convert from 'koa-convert';
+import bodyParser from 'koa-bodyparser';
+import koaRouter from 'koa-router';
 
 dotenv.load();
 const env = process.env;
@@ -37,13 +39,17 @@ const plexClientOptions = {
 };
 
 const plexChannel = new PlexChannel(plexOptions, plexClientOptions);
-const app = express();
 
-app.use(bodyParser.json());
+const router = koaRouter();
+const app = new Koa();
+
+app.use(convert(bodyParser()))
+   .use(router.routes())
+   .use(router.allowedMethods());
 
 // TODO: Figure out way better routes for this and generalize it more:
 // Maybe this should go into the homer-alexa app instead since it does number to word mapping
-app.get('/api/plex/dictionary', async function(req, res) {
+router.get('/api/plex/dictionary', async (ctx) => {
   try {
     const [movies, shows] = await Promise.all([plexChannel.getMovies(), plexChannel.getShows()]);
     const media = movies.concat(shows).map(item => {
@@ -70,28 +76,27 @@ app.get('/api/plex/dictionary', async function(req, res) {
       return title.trim();
     });
 
-    res.json({media});
+    ctx.body = media;
   } catch (error) {
-    res.json({error: error});
+    ctx.throw(500, error);
   }
 });
 
-app.all('/api/plex/find', async function(req, res) {
-  const { name } = req.query;
-  const limit = req.query.limit || 3;
+router.get('/api/plex/find', async (ctx) => {
+  const name = ctx.query.name;
+  const limit = ctx.query.limit || 3;
   const options = { fuzzy: true, name };
   const media = await plexChannel.findMedia(options);
-  if (!media.length) return res.status(404).json(media);
 
-  res.json({ data: media.slice(0, limit) });
+  ctx.body = { data: media.slice(0, limit) };
 });
 
-app.all('/api/plex/play', async function(req, res) {
-  const mediaKey = req.query.key;
-  const resume = req.query.resume || false;
+router.get('/api/plex/play', async (ctx) => {
+  const mediaKey = ctx.query.key;
+  const resume = ctx.query.resume || false;
   let media = await plexChannel.findMedia({ key: mediaKey });
   if (!media.length) {
-    return res.status(404).json('Could not find media');
+    ctx.throw(404, 'Could not find media');
   }
 
   media = media[0];
@@ -103,11 +108,11 @@ app.all('/api/plex/play', async function(req, res) {
       episode = await plexChannel.getNextUnwatchedEpisode(media, { partiallySeen: true });
     } catch (err) {
       // Add links to first episode
-      return res.status(500).json(err);
+      ctx.throw(500, err);
     }
 
     if (episode.viewOffset && !resume) {
-      return res.status(500).json({
+      ctx.throw(500, {
         error: {
           type: 'partially-watched-episode',
           episode
@@ -121,32 +126,15 @@ app.all('/api/plex/play', async function(req, res) {
         offset: episode.viewOffset
       });
 
-      res.status(200).json('ok');
+      ctx.body = 'ok';
     } catch (err) {
-      return res.status(500).json(err);
+      ctx.throw(500, err);
     }
   } else {
-    res.json(media);
+    ctx.body = media;
   }
 });
 
-const server = app.listen(3000, () => {
-  const host = server.address().address;
-  const port = server.address().port;
-
-  console.log(`App listening at http://${host}:${port}`);
+app.listen(3000, function() {
+  console.log('App listening at port 3000');
 });
-
-
-
-// (function app() {
-//   const hue = hueChannel({
-//     username: env.HUE_USERNAME
-//   });
-//
-//   const plexListener = new PlexListener(plexOptions);
-//   plexListener.on('play', () => hue.turnOff('living'));
-//   plexListener.on('pause', () => hue.dim('living', 10));
-//   plexListener.on('resume', () => hue.turnOff('living'));
-//   plexListener.on('stop', () => hue.turnOn('living'));
-// })();
