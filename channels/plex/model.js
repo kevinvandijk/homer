@@ -1,7 +1,7 @@
 import PlexApi from 'plex-api';
 import Promise from 'bluebird';
-import {stringifyParams} from '../helpers/url';
-import {fuzzySearch, normalSearch} from '../helpers/search';
+import {stringifyParams} from '../../helpers/url';
+import {fuzzySearch, normalSearch} from '../../helpers/search';
 
 function createError(type, description) {
   const err = new Error(description || type);
