@@ -151,10 +151,6 @@ export default class PlexChannel {
     });
   }
 
-  startShow(showOrKey, options) {
-    return Promise.resolve();
-  }
-
   _playerCommand(command, options = {}) {
     const server = this.server;
     const params = Object.assign(options, {
