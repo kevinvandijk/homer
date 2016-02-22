@@ -10,6 +10,7 @@ export default async function(ctx, next) {
         source: err.source,
         detail: err.detail,
         meta: {
+          ...err.meta,
           stack: err.stack
         }
       }]
