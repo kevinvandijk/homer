@@ -64,7 +64,16 @@ export async function getDictionary() {
 
 export async function find(options) {
   const limit = options.limit;
-  const media = await plex.findMedia(options);
+
+  // Convert numbered words into numbers for search
+  const name = options.name.split(' ').map(word => {
+    return numbered.parse(word) || word;
+  }).join(' ');
+
+  const media = await plex.findMedia({
+    ...options,
+    name
+  });
 
   const data = await Promise.all(
     (limit ? media.slice(0, limit) : media).map(async (item) => {
