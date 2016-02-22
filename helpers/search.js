@@ -1,8 +1,11 @@
 import FuzzySearch from 'fuzzysearch-js';
 import levenshteinFS from 'fuzzysearch-js/js/modules/LevenshteinFS';
+// import wordCountFS from 'fuzzysearch-js/js/modules/WordCountFS';
+import indexOfFS from 'fuzzysearch-js/js/modules/IndexOfFS';
+
 
 const defaults = {
-  minimumScore: 200,
+  minimumScore: 250,
   caseSensitive: false,
   returnEmptyArray: true,
   termPath: 'title',
@@ -13,7 +16,10 @@ export function fuzzySearch(list, searchValue, options) {
 
   try {
     const fuzzySearch = new FuzzySearch(list, options);
-    fuzzySearch.addModule(levenshteinFS({'maxDistanceTolerance': 20, 'factor': 3}));
+    fuzzySearch.addModule(levenshteinFS({'maxDistanceTolerance': 10, 'factor': 3}));
+    // fuzzySearch.addModule(wordCountFS({'maxWordTolerance': 3, 'factor': 1}));
+    fuzzySearch.addModule(indexOfFS({'minTermLength': 3, 'maxIterations': 500, 'factor': 3}));
+
 
     const results = fuzzySearch.search(searchValue);
 
