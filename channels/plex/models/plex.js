@@ -128,7 +128,7 @@ export default class PlexChannel {
 
   findMedia(options = {}) {
     if (!options.name) return Promise.reject(createError('no-name-or-key-specified'));
-
+    const name = options.name;
     // Search movie or show by name:
     return Promise.all([
       this.getMovies(),
@@ -136,13 +136,17 @@ export default class PlexChannel {
     ]).then(([shows, movies]) => {
       return shows.concat(movies);
     }).then(media => {
-      if (options.key) {
-        const foundMedia = media.find(item => parseInt(item.ratingKey, 10) === parseInt(options.key, 10));
-        return foundMedia ? [foundMedia] : [];
-      } else if (options.name) {
-        const results = (options.fuzzy ? fuzzySearch(media, options.name) : normalSearch(media, options.name));
-        return results || [];
-      }
+      const results = (options.fuzzy
+        ? fuzzySearch(media, name)
+        : normalSearch(media, name)
+      ) || [];
+
+      // Fuzzysearch can sometimes be a bit weird and return more than necessary
+      // if the title is exactly the same as the search term, just return one result:
+      return (results[0] && results[0].title.toLowerCase() === name.toLowerCase()
+        ? [results[0]]
+        : results
+      );
     });
   }
 
