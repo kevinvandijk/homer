@@ -80,11 +80,18 @@ export async function play(key, options = {}) {
   }
 }
 
+export async function findNextEpisode(media, options = {}) {
+  return plex.getNextUnwatchedEpisode(media, options);
+}
+
 async function playShow(media, resume) {
-  const episode = await plex.getNextUnwatchedEpisode(media, { partiallySeen: true });
+  const episode = await findNextEpisode(media, { partiallySeen: true });
 
   if (episode.viewOffset && !resume) {
-    throw new Error('partially-watched');
+    const error = new Error('partially-watched');
+    error.meta = { media, episode };
+    // TODO: Add next episode?
+    throw error;
   }
 
   await plex.play({

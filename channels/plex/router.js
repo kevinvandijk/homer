@@ -32,13 +32,26 @@ async function find(ctx) {
 
 async function play(ctx) {
   try {
-    const episode = await actions.play(ctx.query.key, { resume: ctx.query.resume });
+    const episode = await actions.play(ctx.query.id, { resume: ctx.query.resume });
     ctx.body = {
       data: plexSerializer(episode)
     };
   } catch (err) {
-    const status = err.message === 'not-found' ? 404 : 412;
-    ctx.throw(status, err);
+    if (err.message === 'partially-watched' && err.meta.media.type === 'show') {
+      const nextEpisode = await actions.findNextEpisode(err.meta.media);
+      const error = new Error(err.message);
+
+      if (nextEpisode) {
+        error.meta = {
+          nextEpisode
+        };
+      }
+
+      ctx.throw(412, error);
+    } else {
+      const status = err.message === 'not-found' ? 404 : 412;
+      ctx.throw(status, err);
+    }
   }
 }
 
