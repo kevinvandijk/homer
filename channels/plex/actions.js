@@ -63,43 +63,58 @@ export async function getDictionary() {
 }
 
 export async function find(options) {
-  return plex.findMedia(options);
+  const limit = options.limit;
+  const media = await plex.findMedia(options);
+
+  const data = await Promise.all(
+    (limit ? media.slice(0, limit) : media).map(async (item) => {
+      if (item.type === 'show') {
+        const currentEpisode = await plex.getCurrentEpisode(item);
+        if (currentEpisode) {
+          const nextEpisode = { nextEpisode: await plex.getNextEpisode(item) };
+
+          return {
+            ...item,
+            meta: {
+              currentEpisode,
+              ...nextEpisode
+            }
+          };
+        }
+      }
+
+      return item;
+    })
+  );
+
+  return {
+    data,
+    meta: {
+      total: media.length
+    }
+  };
 }
 
 export async function play(key, options = {}) {
   if (!key) throw new Error('no-key-specified');
-  const resume = options.resume || false;
 
-  let media = await plex.findMedia({ key: key });
-  if (!media.length) throw new Error('not-found');
+  const media = await plex.getByKey(key);
 
-  media = media[0];
+  if (!media) throw new Error('not-found');
+  if (media.type === 'show') throw new Error('show-not-playable-choose-episode');
 
-  if (media.type === 'show') {
-    return playShow(media, resume);
-  }
+  const viewOffset = options.restart ? 0 : media.viewOffset || 0;
+
+  await plex.play({
+    mediaKey: media.key,
+    offset: viewOffset
+  });
+
+  return media;
 }
 
 export async function findNextEpisode(media, options = {}) {
   return plex.getNextUnwatchedEpisode(media, options);
-}
-
-async function playShow(media, resume) {
-  const episode = await findNextEpisode(media, { partiallySeen: true });
-
-  if (episode.viewOffset && !resume) {
-    const error = new Error('partially-watched');
-    error.meta = { media, episode };
-    // TODO: Add next episode?
-    throw error;
-  }
-
-  await plex.play({
-    mediaKey: episode.key,
-    offset: episode.viewOffset
-  });
-
-  return episode;
 }
 
 export async function stop() {

@@ -19,13 +19,13 @@ async function dictionary(ctx) {
 
 async function find(ctx) {
   const limit = ctx.query.limit || 3;
-  const options = { fuzzy: true, name: ctx.query.name };
+  const options = { fuzzy: true, name: ctx.query.name, limit };
   const media = await actions.find(options);
 
   ctx.body = {
-    data: plexSerializer(media.slice(0, limit)),
+    data: plexSerializer(media.data),
     meta: {
-      total: media.length
+      ...media.meta
     }
   };
 }
