@@ -116,33 +116,6 @@ export default class PlexChannel {
     return episodes[index - 1];
   }
 
-  // TODO: Refactor these 3 methods since they're basically all the same
-  findShow(options = {}) {
-    if (!options.key && !options.name) return Promise.reject(createError('no-name-or-key-specified'));
-
-    return this.getShows().then(tvshows => {
-      if (options.key) {
-        return [tvshows.find(show => parseInt(show.ratingKey, 10) === parseInt(options.key, 10))];
-      } else {
-        const shows = (options.fuzzy ? fuzzySearch(tvshows, options.name) : normalSearch(tvshows, options.name));
-        return shows || [];
-      }
-    });
-  }
-
-  findMovie(options = {}) {
-    if (!options.key && !options.name) return Promise.reject(createError('no-name-or-key-specified'));
-
-    return this.getMovies().then(movies => {
-      if (options.key) {
-        return [movies.find(movie => parseInt(movie.ratingKey, 10) === parseInt(options.key, 10))];
-      } else {
-        const results = (options.fuzzy ? fuzzySearch(movies, options.name) : normalSearch(movies, options.name));
-        return results || [];
-      }
-    });
-  }
-
   getByKey(key) {
     // Allow for both full key or short id:
     const shortKey = key.replace('/library/metadata/', '');
