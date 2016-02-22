@@ -21,10 +21,18 @@ function serialize(mediaItem) {
 
   const attributes = pick(mediaItem, fields);
 
+  const title =  (mediaItem.grandparentTitle
+    ? `${mediaItem.grandparentTitle}: ${mediaItem.title}`
+    : mediaItem.title
+  );
+
   const serialized = {
     id: mediaItem.ratingKey,
     type: mediaItem.type,
-    attributes
+    attributes: {
+      ...attributes,
+      title
+    }
   };
 
   if (mediaItem.meta) {
