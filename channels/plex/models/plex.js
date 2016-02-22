@@ -94,19 +94,26 @@ export default class PlexChannel {
     });
   }
 
-  getNextUnwatchedEpisode(showOrKey, options = {}) {
+  getCurrentEpisode(showOrKey) {
     return this.getEpisodes(showOrKey).then(episodes => {
-      let nextEpisode;
-      if (options.partiallySeen) {
-        nextEpisode = episodes.find(episode => !!episode.viewOffset || !!!episode.lastViewedAt);
-      } else {
-        nextEpisode = episodes.find(episode => !!!episode.lastViewedAt);
-      }
+      return episodes.find(episode => !!episode.viewOffset || !!!episode.lastViewedAt) || null;
+    })
+  }
 
-      return nextEpisode
-        ? Promise.resolve(nextEpisode)
-        : Promise.reject(createError('no-unwatched-episode-found'));
-    });
+  async getNextEpisode(showOrKey, previousEpisode) {
+    previousEpisode = previousEpisode || await this.getCurrentEpisode(showOrKey);
+    const episodes = await this.getEpisodes(showOrKey)
+    const index = episodes.findIndex(episode => previousEpisode.key === episode.key);
+
+    return episodes[index + 1];
+  }
+
+  async getPreviousEpisode(showOrKey, nextEpisode) {
+    nextEpisode = nextEpisode || await this.getCurrentEpisode(showOrKey);
+    const episodes = await this.getEpisodes(showOrKey);
+    const index = episodes.findIndex(episode => nextEpisode.key === episode.key);
+
+    return episodes[index - 1];
   }
 
   // TODO: Refactor these 3 methods since they're basically all the same
@@ -136,9 +143,20 @@ export default class PlexChannel {
     });
   }
 
-  findMedia(options = {}) {
-    if (!options.key && !options.name) return Promise.reject(createError('no-name-or-key-specified'));
+  getByKey(key) {
+    // Allow for both full key or short id:
+    const shortKey = key.replace('/library/metadata/', '');
+    return Promise.resolve(this.server.query(`/library/metadata/${key}`)).then(results => {
+      return results._children[0];
+    }).catch(error => {
+      return null;
+    });
+  }
 
+  findMedia(options = {}) {
+    if (!options.name) return Promise.reject(createError('no-name-or-key-specified'));
+
+    // Search movie or show by name:
     return Promise.all([
       this.getMovies(),
       this.getShows()

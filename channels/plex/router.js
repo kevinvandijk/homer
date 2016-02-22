@@ -39,15 +39,13 @@ async function play(ctx) {
   } catch (err) {
     if (err.message === 'partially-watched' && err.meta.media.type === 'show') {
       const nextEpisode = await actions.findNextEpisode(err.meta.media);
-      const error = new Error(err.message);
 
-      if (nextEpisode) {
-        error.meta = {
-          nextEpisode
-        };
-      }
+      const meta = (nextEpisode
+        ? { next: plexSerializer(nextEpisode) }
+        : {}
+      );
 
-      ctx.throw(412, error);
+      ctx.throw(412, {message: err.message, meta});
     } else {
       const status = err.message === 'not-found' ? 404 : 412;
       ctx.throw(status, err);
