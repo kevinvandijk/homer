@@ -13,7 +13,9 @@ export default router()
 // Maybe this should go into the homer-alexa app instead since it does number to word mapping
 async function dictionary(ctx) {
   ctx.body = {
-    data: await actions.getDictionary()
+    data: {
+      media: await actions.getDictionary()
+    }
   };
 }
 
