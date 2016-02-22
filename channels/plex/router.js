@@ -32,7 +32,7 @@ async function find(ctx) {
 
 async function play(ctx) {
   try {
-    const episode = await actions.play(ctx.query.id, { resume: ctx.query.resume });
+    const episode = await actions.play(ctx.query.id, { restart: ctx.query.restart });
     ctx.body = {
       data: plexSerializer(episode)
     };
