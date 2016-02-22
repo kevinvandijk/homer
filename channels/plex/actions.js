@@ -44,7 +44,7 @@ export async function getDictionary() {
     // Replace non-word characters at the beginning of the title because Alexa can't handle those
     title = title.replace(/^\W/, '');
     // Replace semicolons and the like, Alexa can't handle those either
-    title = title.replace(/:|;|,/g, '');
+    title = title.replace(/:|;|,|\/|\\/g, '');
     // Try to replace dots that are not used as an abbreviation:
     title = title.replace(/(\.)\w/g, function($0) {
       return $0.replace('.', '');
@@ -53,6 +53,8 @@ export async function getDictionary() {
     title = title.replace('&', 'and');
     // Remove weird hyphens and replace with normal ones:
     title = title.replace(/–|·/g, '-');
+    // Alexa does not permit spaces with hyphens
+    title = title.replace(' - ', ' ');
     // Regex info: http://stackoverflow.com/questions/13636997/extract-all-numbers-from-string-in-javascript
     title = title.replace(/([-+]?\d+(\.\d+)?)/g, function($0) {
       return numbered.stringify($0);
