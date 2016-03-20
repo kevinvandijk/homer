@@ -23,6 +23,13 @@ app
   .use(router.allowedMethods());
 
 router.use('/api/plex', plexRouter.routes());
+
+router.all('/api/events/:listener', function(ctx) {
+  const listener = ctx.params.listener;
+  const name = ctx.request.body.name;
+  console.log('event:', listener, name);
+});
+
 router.get('/status', function(ctx) {
   ctx.body = "ok";
 });
