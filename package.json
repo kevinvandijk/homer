@@ -22,6 +22,7 @@
     "koa-qs": "^2.0.0",
     "koa-router": "^7.0.1",
     "lodash": "^3.10.1",
+    "node-fetch": "^1.4.0",
     "node-hue-api": "1.2.1",
     "numbered": "^1.0.0",
     "plex-api": "^3.2.0",

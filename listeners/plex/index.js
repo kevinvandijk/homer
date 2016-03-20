@@ -1,115 +1,89 @@
 import PlexApi from 'plex-api';
-import Promise from 'bluebird';
+import fetch from 'node-fetch';
 
-export default class PlexWatcher {
-  constructor(plexOptions) {
-    this.state = '';
-    this.device = plexOptions.device;
-    delete plexOptions.device;
+const env = process.env;
 
-    const plex = new PlexApi(plexOptions);
-    this._eventListeners = [];
+const plexOptions = {
+  hostname: env.PLEX_SERVER_HOST,
+  port: env.PLEX_SERVER_PORT,
+  username: env.PLEX_SERVER_USERNAME,
+  password: env.PLEX_SERVER_PASSWORD,
+  authToken: env.PLEX_SERVER_TOKEN,
+  options: {
+    identifier: '9ffb7743-cbd7-42ab-92fb-334f20ea57e6',
+    name: 'Jarvis',
+    product: 'Jarvis',
+    version: '0.0.1',
+    machineIdentifier: env.PLEX_SERVER_IDENTIFIER
+  }
+};
 
-    this._startListener(plex);
+const plex = new PlexApi(plexOptions);
+let state;
+
+// Statuses: buffering / paused / stopped / playing
+async function transitionState(nextState) {
+  console.log(nextState);
+  const prevState = state;
+
+  if (prevState === nextState) return;
+  state = nextState;
+
+  const headers = { 'Content-Type': 'application/json' };
+  const body = JSON.stringify({ name: state });
+  const result = await fetch(`${env.API_URL}/api/events/plex`, { method: 'POST', body, headers });
+
+
+  if (result.status !== 200) {
+    // TODO: Add more details to error
+    throw new Error('Error connecting to api');
   }
 
-  on(action, callback) {
-    this._eventListeners.push({
-      action,
-      callback
-    });
-  }
-
-  off(action, callback) {
-    this._eventListeners = this._eventListeners.filter((listener) => {
-      if (!callback) {
-        return action !== listener.action;
-      } else {
-        return !(action === listener.action && callback === listener.callback);
-      }
-    });
-  }
-
-  trigger(action) {
-    this._eventListeners.forEach(listener => {
-      if (listener.action === action) {
-        listener.callback(action);
-      }
-    });
-  }
-
-  _findPlayer(name, sessions) {
-    let player;
-
-    for (let i in sessions) {
-      const session = sessions[i];
-
-      if (session._children) {
-        const playerRegex = new RegExp(name, 'i');
-        const found = session._children.filter(child =>
-          child._elementType == 'Player' && playerRegex.test(child.title)
-        );
-
-        if (found.length) {
-          player = found[0];
-          break;
-        }
-      }
-    }
-
-    return player || null;
-  }
-
-  _transitionTo(nextState) {
-    const prevState = this.state || 'stopped';
-
-    if (prevState === nextState) return;
-
-    let action;
-
-    if (prevState === 'paused' && nextState === 'playing') {
-      action = 'resume';
-    } else {
-      const actions = {
-        'stopped': 'stop',
-        'paused': 'pause',
-        'playing': 'play'
-      };
-      action = actions[nextState];
-    }
-
-    if (action) {
-      this.state = nextState;
-      this.trigger(action);
-    }
-  }
-
-  _startListener(plex) {
-    setInterval(() => {
-      plex.query('/status/sessions')
-        .then(this._findActiveSession.bind(this))
-        .then(player => this._transitionTo(player.state))
-        .catch(function(e) {
-          console.log('Something went wrong', e);
-        });
-    }, 500);
-  }
-
-  _findActiveSession(result = {}) {
-    const sessions = result._children || [];
-
-    if (!sessions.length) {
-      // console.warn('No sessions found');
-      return Promise.resolve({state: 'stopped'});
-    }
-
-    const player = this._findPlayer(this.device, sessions);
-
-    if (!player) {
-      // console.warn('No active player found');
-      return Promise.resolve({state: 'stopped'});
-    } else {
-      return Promise.resolve(player);
-    }
-  }
+  return result.json();
 }
+
+function findPlayer(name, sessions) {
+  let player;
+
+  for (let i in sessions) {
+    const session = sessions[i];
+
+    if (session._children) {
+      // console.log(session._children);
+      const playerRegex = new RegExp(name, 'i');
+      const found = session._children.filter(child =>
+        child._elementType === 'Player' && playerRegex.test(child.title)
+      );
+
+      if (found.length) {
+        player = found[0];
+        break;
+      }
+    }
+  }
+
+  return player || null;
+}
+
+async function getPlayerState() {
+  const sessions = (await plex.query('/status/sessions') || {})._children;
+  if (!sessions) return 'stopped';
+
+  const player = findPlayer(env.PLEX_DEVICE, sessions);
+  if (!player) return 'stopped';
+
+  return player.state;
+}
+
+async function listener() {
+  try {
+    const state = await getPlayerState();
+    await transitionState(state);
+  } catch (e) {
+    console.log('Error', e);
+  }
+
+  setTimeout(listener, 1000);
+};
+
+listener();
