@@ -17,6 +17,9 @@ app
   .use(router.allowedMethods());
 
 router.use('/api/plex', plexRouter.routes());
+router.get('/status', function(ctx) {
+  ctx.body = "ok";
+});
 
 app.listen(3000, function() {
   console.log('App listening at port 3000');
