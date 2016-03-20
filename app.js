@@ -3,14 +3,20 @@ import convert from 'koa-convert';
 import bodyParser from 'koa-bodyparser';
 import koaRouter from 'koa-router';
 import errorHandler from './middlewares/error-handler';
+import bunyanLogger from 'koa-bunyan-logger';
+import bunyan from 'bunyan';
 
 // TODO: Rename this:
 import plexRouter from './channels/plex/router';
 
+const log = bunyan.createLogger({
+  name: 'homer'
+});
 const router = koaRouter();
 const app = new Koa();
 
 app
+  .use(convert(bunyanLogger(log)))
   .use(errorHandler)
   .use(convert(bodyParser()))
   .use(router.routes())
