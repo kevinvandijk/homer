@@ -12,6 +12,7 @@ import HueChannel from './channels/hue';
 import plexRouter from './channels/plex/router';
 
 dotenv.load();
+import PlexChannel from './channels/plex';
 
 const log = bunyan.createLogger({
   name: 'homer'
