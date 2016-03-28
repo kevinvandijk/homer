@@ -15,6 +15,7 @@
     "bunyan": "^1.8.0",
     "dotenv": "^1.2.0",
     "fuzzysearch-js": "^0.2.0",
+    "harmonyhubjs-client": "^1.1.8",
     "koa": "^2.0.0-alpha.3",
     "koa-bodyparser": "^3.0.0",
     "koa-bunyan-logger": "^1.3.0",
