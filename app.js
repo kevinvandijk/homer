@@ -13,6 +13,7 @@ import plexRouter from './channels/plex/router';
 
 dotenv.load();
 import PlexChannel from './channels/plex';
+import HarmonyChannel from './channels/harmony';
 
 const log = bunyan.createLogger({
   name: 'homer'
@@ -47,6 +48,30 @@ plexChannel.subscribe(async (state) => {
 
 router.get('/status', function(ctx) {
   ctx.body = "ok";
+});
+
+router.all('/api/power/on', async (ctx) => {
+  // TODO: Remove default value:
+  const device = ctx.request.body.device || 'tv';
+
+  if (device.match(/tv|television/i)) {
+    const harmonyChannel = new HarmonyChannel();
+    ctx.body = await harmonyChannel.startActivity('TV');
+  }
+
+  ctx.status = 200;
+});
+
+router.all('/api/power/off', async (ctx) => {
+  // TODO: Remove default value:
+  const device = ctx.request.body.device || 'tv';
+
+  if (device.match(/tv|television/i)) {
+    const harmonyChannel = new HarmonyChannel();
+    ctx.body = await harmonyChannel.stopActivity('TV');
+  }
+
+  ctx.status = 200;
 });
 
 app.listen(3000, function() {
