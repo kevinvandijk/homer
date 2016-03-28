@@ -79,8 +79,13 @@ export default class PlexChannel {
   _listen = async () => {
     if (this.hasSubscribers()) {
       try {
+        // TEmp until something better:
         const state = await getPlayerState(this.connection);
-        runCallbacks(state, this._subscribers);
+        // console.log(state.state);
+        if (state.state !== this.previousState) {
+          this.previousState = state.state;
+          runCallbacks(state, this._subscribers);
+        }
       } catch (e) {
         console.log('ERROR', e);
       }

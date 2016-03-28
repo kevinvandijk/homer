@@ -30,28 +30,19 @@ app
 
 router.use('/api/plex', plexRouter.routes());
 
-router.all('/api/events/:listener', async function(ctx) {
-  // ALL TEMP ductape:
-  const listener = ctx.params.listener;
-  const name = ctx.request.body.name;
 
-  if (listener === 'plex' && name === 'playing') {
-    const lights = await hue.findLights('desk');
-    lights.map(light => {
-      hue.setLight(light.id, {on: false});
-    });
+const plexChannel = new PlexChannel();
+plexChannel.subscribe(async (state) => {
+  const lights = await hue.findLights('desk');
+
+  switch (state.state) {
+    case 'playing':
+      return hue.turnOff(lights);
+    case 'stopped':
+      return hue.turnOn(lights);
+    case 'paused':
+      return hue.turnOn(lights);
   }
-
-  if (listener === 'plex' && name === 'stopped') {
-    const lights = await hue.findLights('desk');
-    lights.map(light => {
-      hue.setLight(light.id, {on: true});
-    });
-  }
-
-  return ctx.body = hue.getState();
-
-  ctx.body = 'ok';
 });
 
 router.get('/status', function(ctx) {
