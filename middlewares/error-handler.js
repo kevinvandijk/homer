@@ -11,9 +11,9 @@ export default async function(ctx, next) {
         detail: err.detail,
         meta: {
           ...err.meta,
-          stack: err.stack
-        }
-      }]
+          stack: err.stack,
+        },
+      }],
     };
   }
 }

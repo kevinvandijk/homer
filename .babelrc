@@ -1,9 +1,6 @@
 {
   "presets": [
     "es2015-node",
-    "stage-2"
-  ],
-  "plugins": [
-    "transform-class-properties"
+    "stage-1"
   ]
 }
