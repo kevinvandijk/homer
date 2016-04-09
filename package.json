@@ -12,7 +12,7 @@
     "babel-polyfill": "^6.7.4",
     "babel-preset-es2015-node": "^5.0.2",
     "babel-preset-stage-1": "^6.5.0",
-    "bluebird": "^3.0.5",
+    "bluebird": "^3.3.4",
     "bunyan": "^1.8.0",
     "dotenv": "^1.2.0",
     "fuzzysearch-js": "^0.2.0",
@@ -26,8 +26,11 @@
     "lodash": "^3.10.1",
     "node-fetch": "^1.4.0",
     "node-hue-api": "2.2.0",
+    "node-uuid": "^1.4.7",
     "numbered": "^1.0.0",
     "plex-api": "^3.2.0",
+    "redux": "^3.3.1",
+    "redux-saga": "^0.9.5",
     "underscore": "^1.8.3"
   },
   "scripts": {
