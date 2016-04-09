@@ -35,12 +35,19 @@
   },
   "scripts": {
     "start": "node index.js | bunyan",
-    "dev": "./node_modules/.bin/nodemon | bunyan"
+    "dev": "./node_modules/.bin/nodemon | bunyan",
+    "test": "./node_modules/.bin/mocha --compilers js:babel-register --require ./test/test-helper.js --recursive",
+    "test:watch": "./node_modules/.bin/mocha --compilers js:babel-register --require ./test/test-helper.js --recursive --watch"
   },
   "devDependencies": {
     "babel-eslint": "^6.0.2",
+    "babel-register": "^6.7.2",
+    "chai": "^3.5.0",
+    "chai-immutable": "^1.5.4",
     "eslint": "^2.6.0",
     "eslint-config-airbnb": "^6.2.0",
+    "immutable": "^3.7.6",
+    "mocha": "^2.4.5",
     "nodemon": "^1.8.1"
   }
 }
