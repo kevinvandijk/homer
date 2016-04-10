@@ -3,10 +3,7 @@ import deepFreeze from 'deep-freeze';
 import * as actions from '../../../channels/plex/actions';
 import reducer from '../../../channels/plex/reducer';
 
-describe('Homer Plex Reducer', () => {
-  // const oldState = {
-  //   so
-  // }
+describe('Plex Reducer', () => {
   it('returns the initial state', () => {
     const action = deepFreeze({});
 
