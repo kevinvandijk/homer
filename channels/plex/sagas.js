@@ -31,7 +31,6 @@ const plexOptions = {
   },
 };
 
-import { takeLatest, takeEvery } from 'redux-saga';
 import { cancel, race, put, take, call, fork } from 'redux-saga/effects';
 
 let instances;
@@ -41,7 +40,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 
 // Maybe call store here before dispatching to not constantly do an updateStatus
-function* listener(id, instance) {
+export function* listener(id, instance) {
   let prevState;
 
 
@@ -55,19 +54,19 @@ function* listener(id, instance) {
 
     if (fromState) {
       prevState = fromState.status;
-      break;
-    }
+    } else {
+      // Poll Plex:
+      try {
+        // console.log('yes here', );
+        const newState = yield call(instance.status);
 
-    // Poll Plex:
-    try {
-      const newState = yield call(instance.status);
-
-      if (newState !== prevState) {
-        yield put(updateStatus(id, newState));
-        prevState = newState;
+        if (newState !== prevState) {
+          yield put(updateStatus(id, newState));
+          prevState = newState;
+        }
+      } catch (e) {
+        console.log('do something with error', e);
       }
-    } catch (e) {
-      console.log('do something with error', e);
     }
   }
 }
@@ -98,7 +97,7 @@ function* controller() {
   }
 }
 
-function* createConnector() {
+export function* createConnector() {
   const connectorId = uuid.v4();
   const instance = new Plex(plexOptions);
 

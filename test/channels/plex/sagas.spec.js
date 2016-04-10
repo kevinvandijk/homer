@@ -1,30 +1,25 @@
 import expect from 'expect';
-import mockery from 'mockery';
+import uuid from 'uuid-regexp';
+import * as Plex from '../../../channels/plex/plex';
 import * as effects from 'redux-saga/effects';
+import * as sagas from '../../../channels/plex/sagas';
+import { updateStatus } from '../../../channels/plex/actions';
+
 
 const REQUEST_CONNECTORS = 'REQUEST_CONNECTORS';
 const STOP_CONNECTORS = 'STOP_CONNECTORS';
-let sagas;
+
 
 describe('Plex Sagas', () => {
+  afterEach(() => {
+    expect.restoreSpies();
+  });
+
   describe('#createSaga', () => {
     let runSaga;
 
     beforeEach(() => {
-      mockery.enable({
-        warnOnReplace: false,
-        warnOnUnregistered: false,
-      });
-
-      mockery.registerMock('redux-saga/effects', effects);
-
-      sagas = require('../../../channels/plex/sagas');
       runSaga = sagas.createSaga(REQUEST_CONNECTORS, STOP_CONNECTORS);
-    });
-
-    afterEach(() => {
-      expect.restoreSpies();
-      mockery.disable();
     });
 
     it('returns a function to run the saga', () => {
@@ -51,6 +46,8 @@ describe('Plex Sagas', () => {
     });
 
     it('cancels exising forks when STOP_CONNECTORS is dispatched', () => {
+      // mockery.registerMock('redux-saga/effects', effects);
+
       const saga = runSaga();
       saga.next();
       saga.next();
@@ -58,7 +55,7 @@ describe('Plex Sagas', () => {
 
       const spy = expect.spyOn(effects, 'cancel');
 
-      const result = saga.next(['stuff', 'more stuff']);
+      saga.next(['stuff', 'more stuff']);
       saga.next();
 
       expect(spy.calls.length).toEqual(2, 'Expected cancel to be called twice');
@@ -76,6 +73,78 @@ describe('Plex Sagas', () => {
       saga.next();
 
       expect(saga.next().value).toEqual(effects.take(REQUEST_CONNECTORS));
+    });
+  });
+
+  describe('#createConnector', () => {
+    it('creates a unique connectorId', () => {
+      const saga = sagas.createConnector();
+      const { connectorId } = saga.next().value;
+
+      expect(uuid().test(connectorId)).toBe(true);
+    });
+
+    it('creates a Plex instance', () => {
+      // Dirty mocking
+      class Mock {}
+      Plex.default = Mock;
+
+      const saga = sagas.createConnector();
+      const { instance } = saga.next().value;
+
+      expect(instance).toBeA(Mock);
+    });
+  });
+
+  describe('#listener', () => {
+    let plexMock;
+
+    beforeEach(() => {
+      plexMock = {
+        status() {},
+      };
+    });
+
+    it('requests the status from Plex', () => {
+      const saga = sagas.listener(1, plexMock);
+      saga.next();
+      const result = saga.next({}).value;
+      const expected = effects.call(plexMock.status);
+
+      expect(result).toEqual(expected);
+    });
+
+    it('dispatches an UPDATE_STATUS action when getting a new status from Plex', () => {
+      const newState = 'playing';
+      expect.spyOn(plexMock, 'status').andReturn(newState);
+
+      const saga = sagas.listener(1, plexMock);
+      saga.next();
+      saga.next({});
+      const initialResult = saga.next(newState).value;
+      const expected = effects.put(updateStatus(1, newState));
+
+      expect(initialResult).toEqual(expected);
+
+      // Next update with same state:
+      saga.next();
+      saga.next({});
+      const nextResult = saga.next(newState).value;
+
+      expect(nextResult).toNotEqual(expected);
+    });
+
+    it('does not dispatch anything when the state was updated from somewhere else', () => {
+      const newState = 'playing';
+      const saga = sagas.listener(1, plexMock);
+      saga.next();
+      const result = saga.next({
+        fromState: { status: newState },
+      }).value;
+
+      const notExpected = effects.put(updateStatus(1, newState));
+
+      expect(result).toNotEqual(notExpected);
     });
   });
 });
