@@ -72,18 +72,6 @@ function* listener(id, instance) {
   }
 }
 
-// function* play() {
-//   console.log('yaaay');
-// }
-//
-// function* stop() {
-//
-// }
-//
-// function pause() {
-//
-// }
-
 function* controller() {
   let runningAction;
 
@@ -113,12 +101,15 @@ function* controller() {
 function* createConnector() {
   const connectorId = uuid.v4();
   const instance = new Plex(plexOptions);
+
   return { connectorId, instance };
 }
 
 export function createSaga(REQUEST_CONNECTORS, STOP_CONNECTORS) {
   return function* runSaga() {
-    while (yield take(REQUEST_CONNECTORS)) {
+    while (true) {
+      yield take(REQUEST_CONNECTORS);
+
       const { connectorId, instance } = yield createConnector();
       instances = {
         [connectorId]: instance,
@@ -131,10 +122,10 @@ export function createSaga(REQUEST_CONNECTORS, STOP_CONNECTORS) {
 
       yield take(STOP_CONNECTORS);
 
-      // eslint-disable-next-line
-      sagas.forEach(function* (saga) {
-        yield cancel(saga);
-      });
+      yield [
+        cancel(sagas[0]),
+        cancel(sagas[1]),
+      ];
     }
   };
 }

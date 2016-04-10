@@ -7,6 +7,9 @@
   },
   "globals": {
     "describe",
-    "it"
+    "it",
+    "xit",
+    "beforeEach",
+    "afterEach"
   }
 }
