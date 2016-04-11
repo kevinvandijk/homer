@@ -1,13 +1,13 @@
-import PlexApi from 'plex-api';
+// ÷import PlexApi from 'plex-api';
+const PlexApi = require('plex-api');
 
 function findPlayer(name, sessions) {
   let player;
-
   for (let i in sessions) {
     if (i) {
       const session = sessions[i];
-
       if (session._children) {
+
         const playerRegex = new RegExp(name, 'i');
         const found = session._children.filter(child =>
           child._elementType === 'Player' && playerRegex.test(child.title)
@@ -34,7 +34,7 @@ async function getPlayerStatus(connection, device) {
   return player.state;
 }
 
-export default class PlexChannel {
+export default class PlexController {
   constructor(plexOptions) {
     this.device = plexOptions.device;
     this.connection = new PlexApi(plexOptions);

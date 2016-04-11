@@ -57,7 +57,6 @@ export function* listener(id, instance) {
     } else {
       // Poll Plex:
       try {
-        // console.log('yes here', );
         const newState = yield call(instance.status);
 
         if (newState !== prevState) {
