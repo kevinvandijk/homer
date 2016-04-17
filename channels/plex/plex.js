@@ -1,5 +1,7 @@
 // ÷import PlexApi from 'plex-api';
 const PlexApi = require('plex-api');
+// TODO: This needs to move somewhere else:
+import { fuzzySearch, normalSearch } from '../../helpers/search';
 
 function findPlayer(name, sessions) {
   let player;
@@ -34,6 +36,24 @@ async function getPlayerStatus(connection, device) {
   return player.state;
 }
 
+async function getDirectories(connection) {
+  const result = await connection.query('/library/sections');
+  return (result || {})._children || [];
+}
+
+async function listItems(connection, sections) {
+  const sectionList = Array.isArray(sections) ? sections : [sections];
+  const lists = await Promise.all(sectionList.map(directory => {
+    const suffix = directory.type === 'show' ? 'all' : 'all';
+    const uri = `${directory.uri}/${suffix}`;
+    return connection.query(uri);
+  }));
+
+  return lists.map(listItem =>
+    (listItem || {})._children || []
+  ).reduce((a, b) => a.concat(b));
+}
+
 export default class PlexController {
   constructor(plexOptions) {
     this.device = plexOptions.device;
@@ -44,5 +64,25 @@ export default class PlexController {
   status = async () => {
     const state = await getPlayerStatus(this.connection, this.device);
     return state;
+  }
+
+  search = async (query = '', options = { fuzzy: true }) => {
+    const directories = await getDirectories(this.connection);
+    if (!directories.length) return [];
+
+    const items = await listItems(this.connection, directories);
+    if (!items.length) return [];
+
+    const results = (options.fuzzy
+      ? fuzzySearch(items, query)
+      : normalSearch(items, query)
+    );
+
+    // Fuzzysearch can sometimes be a bit weird and return more than necessary
+    // if the title is exactly the same as the search term, just return one result:
+    return (results[0] && results[0].title.toLowerCase() === query.toLowerCase()
+      ? [results[0]]
+      : results
+    );
   }
 }
