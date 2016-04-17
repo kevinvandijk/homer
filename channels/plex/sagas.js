@@ -9,28 +9,6 @@ import {
   PLAY,
 } from './actions';
 import Plex from './plex';
-
-// Temporary stuff:
-import dotenv from 'dotenv';
-dotenv.load();
-const env = process.env;
-
-const plexOptions = {
-  hostname: env.PLEX_SERVER_HOST,
-  port: env.PLEX_SERVER_PORT,
-  username: env.PLEX_SERVER_USERNAME,
-  password: env.PLEX_SERVER_PASSWORD,
-  authToken: env.PLEX_SERVER_TOKEN,
-  device: env.PLEX_DEVICE,
-  options: {
-    identifier: '9ffb7743-cbd7-42ab-92fb-334f20ea57e6',
-    name: 'Jarvis',
-    product: 'Jarvis',
-    version: '0.0.1',
-    machineIdentifier: env.PLEX_SERVER_IDENTIFIER,
-  },
-};
-
 import { cancel, race, put, take, call, fork } from 'redux-saga/effects';
 
 let instances;
@@ -96,19 +74,19 @@ function* controller() {
   }
 }
 
-export function* createConnector() {
-  const connectorId = uuid.v4();
-  const instance = new Plex(plexOptions);
+export function* createConnector(options) {
+  const connectorId = 'server' || uuid.v4();
+  const instance = new Plex(options);
 
   return { connectorId, instance };
 }
 
-export function createSaga(REQUEST_CONNECTORS, STOP_CONNECTORS) {
+export function createSaga(actions, options) {
   return function* runSaga() {
     while (true) {
-      yield take(REQUEST_CONNECTORS);
+      yield take(actions.REQUEST_CONNECTORS);
 
-      const { connectorId, instance } = yield createConnector();
+      const { connectorId, instance } = yield createConnector(options);
       instances = {
         [connectorId]: instance,
       };
@@ -118,7 +96,7 @@ export function createSaga(REQUEST_CONNECTORS, STOP_CONNECTORS) {
         fork(controller, connectorId, instance),
       ];
 
-      yield take(STOP_CONNECTORS);
+      yield take(actions.STOP_CONNECTORS);
 
       yield [
         cancel(sagas[0]),

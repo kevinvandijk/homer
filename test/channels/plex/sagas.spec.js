@@ -4,10 +4,7 @@ import * as Plex from '../../../channels/plex/plex';
 import * as effects from 'redux-saga/effects';
 import * as sagas from '../../../channels/plex/sagas';
 import { updateStatus } from '../../../channels/plex/actions';
-
-
-const REQUEST_CONNECTORS = 'REQUEST_CONNECTORS';
-const STOP_CONNECTORS = 'STOP_CONNECTORS';
+import * as actions from '../../../actions';
 
 
 describe('Plex Sagas', () => {
@@ -19,7 +16,7 @@ describe('Plex Sagas', () => {
     let runSaga;
 
     beforeEach(() => {
-      runSaga = sagas.createSaga(REQUEST_CONNECTORS, STOP_CONNECTORS);
+      runSaga = sagas.createSaga(actions);
     });
 
     it('returns a function to run the saga', () => {
@@ -28,7 +25,7 @@ describe('Plex Sagas', () => {
 
     it('waits for the REQUEST_CONNECTORS action before doing anything', () => {
       const saga = runSaga();
-      expect(saga.next().value).toEqual(effects.take(REQUEST_CONNECTORS));
+      expect(saga.next().value).toEqual(effects.take(actions.REQUEST_CONNECTORS));
     });
 
     it('creates a forked listener and controller', () => {
@@ -72,11 +69,18 @@ describe('Plex Sagas', () => {
       saga.next(['listener', 'controller']);
       saga.next();
 
-      expect(saga.next().value).toEqual(effects.take(REQUEST_CONNECTORS));
+      expect(saga.next().value).toEqual(effects.take(actions.REQUEST_CONNECTORS));
     });
   });
 
   describe('#createConnector', () => {
+    class Mock {}
+
+    beforeEach(() => {
+      // Dirty mocking
+      Plex.default = Mock;
+    });
+
     it('creates a unique connectorId', () => {
       const saga = sagas.createConnector();
       const { connectorId } = saga.next().value;
@@ -85,10 +89,6 @@ describe('Plex Sagas', () => {
     });
 
     it('creates a Plex instance', () => {
-      // Dirty mocking
-      class Mock {}
-      Plex.default = Mock;
-
       const saga = sagas.createConnector();
       const { instance } = saga.next().value;
 
