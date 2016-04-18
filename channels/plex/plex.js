@@ -1,15 +1,13 @@
-// ÷import PlexApi from 'plex-api';
-const PlexApi = require('plex-api');
+import PlexApi from 'plex-api';
 // TODO: This needs to move somewhere else:
 import { fuzzySearch, normalSearch } from '../../helpers/search';
 
 function findPlayer(name, sessions) {
   let player;
-  for (let i in sessions) {
+  for (const i in sessions) {
     if (i) {
       const session = sessions[i];
       if (session._children) {
-
         const playerRegex = new RegExp(name, 'i');
         const found = session._children.filter(child =>
           child._elementType === 'Player' && playerRegex.test(child.title)
