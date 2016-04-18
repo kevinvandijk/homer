@@ -4,6 +4,10 @@ export const STOP = 'homer/plex/STOP';
 export const PAUSE = 'homer/plex/PAUSE';
 export const UPDATE_STATUS = 'homer/plex/UPDATE_STATUS';
 
+export const SEARCH_MEDIA_REQUEST = 'homer/plex/SEARCH_MEDIA_REQUEST';
+export const SEARCH_MEDIA_SUCCESS = 'homer/plex/SEARCH_MEDIA_SUCCESS';
+export const SEARCH_MEDIA_FAILURE = 'homer/plex/SEARCH_MEDIA_FAILURE';
+
 export function search(name) {
   return {
     name,
@@ -37,6 +41,36 @@ export function updateStatus(id, status) {
     id,
     status,
     type: UPDATE_STATUS,
+  };
+}
+
+export function searchMedia(id, title) {
+  return {
+    payload: {
+      id,
+      title,
+    },
+    type: SEARCH_MEDIA_REQUEST,
+  };
+}
+
+export function searchMediaSuccess(id, results) {
+  return {
+    payload: {
+      id,
+      results,
+    },
+    type: SEARCH_MEDIA_SUCCESS,
+  };
+}
+
+export function searchMediaFailure(id, error) {
+  return {
+    payload: {
+      id,
+      error,
+    },
+    type: SEARCH_MEDIA_FAILURE,
   };
 }
 

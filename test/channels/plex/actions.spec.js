@@ -26,4 +26,43 @@ describe('Plex Actions', () => {
     const expected = { id, status, type: actions.UPDATE_STATUS };
     expect(actions.updateStatus(id, status)).toEqual(expected);
   });
+
+  it('should create a SEARCH_MEDIA_REQUEST action and include the id and title', () => {
+    const id = 2;
+    const title = 'Superdupertitle';
+    const expected = {
+      type: actions.SEARCH_MEDIA_REQUEST,
+      payload: {
+        id,
+        title,
+      },
+    };
+    expect(actions.searchMedia(id, title)).toEqual(expected);
+  });
+
+  it('should create a SEARCH_MEDIA_SUCCESS action with the search result payload', () => {
+    const id = 2;
+    const results = { search: 'results and stuff' };
+    const expected = {
+      type: actions.SEARCH_MEDIA_SUCCESS,
+      payload: {
+        id,
+        results,
+      },
+    };
+    expect(actions.searchMediaSuccess(id, results)).toEqual(expected);
+  });
+
+  it('should create a SEARCH_MEDIA_FAILURE action with the error in its payload', () => {
+    const id = 3;
+    const error = new Error('Stupid error :(');
+    const expected = {
+      type: actions.SEARCH_MEDIA_FAILURE,
+      payload: {
+        id,
+        error,
+      },
+    };
+    expect(actions.searchMediaFailure(id, error)).toEqual(expected);
+  });
 });

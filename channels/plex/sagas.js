@@ -4,9 +4,9 @@ import uuid from 'node-uuid';
 import {
   updateStatus,
   UPDATE_STATUS,
-  STOP,
-  PAUSE,
-  PLAY,
+  SEARCH_MEDIA_REQUEST,
+  searchMediaSuccess,
+  searchMediaFailure,
 } from './actions';
 import Plex from './plex';
 import { cancel, race, put, take, call, fork } from 'redux-saga/effects';
@@ -25,6 +25,9 @@ export function* listener(id, instance) {
   while (true) {
     // If the status is changed from another source and an UPDATE_STATUS action
     // was dispatched, reset the prevState cache, otherwise update by polling Plex
+    // TODO: Maybe it's better to use select() and compare the new state to the current
+    // state in the store. If the status gets updated by any other means than UPDATE_STATUS
+    // it might not work. Can this happen?
     const { fromState } = yield race({
       fromState: take(UPDATE_STATUS),
       fromListener: call(delay, prevState ? 3000 : 0),
@@ -48,29 +51,28 @@ export function* listener(id, instance) {
   }
 }
 
+export function* searchMedia(id, instance, title) {
+  try {
+    const results = yield call(instance.search, title);
+    yield put(searchMediaSuccess(id, results));
+  } catch (err) {
+    yield put(searchMediaFailure(id, err));
+  }
+}
+
 function* controller() {
   let runningAction;
 
   while (true) {
-    const winner = yield race({
-      play: take(PLAY),
-      stop: take(STOP),
-      pause: take(PAUSE),
-    });
+    const action = yield take('*');
 
-    if (runningAction && runningAction.isRunning()) cancel(runningAction);
-
-    const method = Object.keys(winner)[0];
-    const payload = winner[action].payload;
-
-    // // TODO: This sucks, find better way:
-    // if (action === 'play') {
-    //   runningAction = yield fork(play, payload);
-    // } else if (action === 'stop') {
-    //   runningAction = yield fork(stop, payload);
-    // } else if (action === 'pause') {
-    //   runningAction = yield fork(pause, payload);
-    // }
+    switch (action.type) {
+      case SEARCH_MEDIA_REQUEST:
+        const { id } = action.payload;
+        const instance = instances[id];
+        yield fork(searchMedia, id, instance, action.payload.title);
+        break;
+    }
   }
 }
 
