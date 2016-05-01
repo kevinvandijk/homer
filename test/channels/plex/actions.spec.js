@@ -2,22 +2,54 @@ import expect from 'expect';
 import * as actions from '../../../channels/plex/actions';
 
 describe('Plex Actions', () => {
-  it('should create a PLAY action', () => {
+  it('should create a PLAY action with default offset and respect given offset', () => {
     const id = 1;
-    const expected = { id, type: actions.PLAY };
-    expect(actions.play(expected.id)).toEqual(expected);
+    const key = 'somefile';
+
+    expect(actions.play(id, key)).toEqual({
+      type: actions.PLAYER_REQUEST,
+      payload: {
+        id,
+        key,
+        command: 'playMedia',
+        offset: 0,
+      },
+    });
+
+    expect(actions.play(id, key, 20)).toEqual({
+      type: actions.PLAYER_REQUEST,
+      payload: {
+        id,
+        key,
+        command: 'playMedia',
+        offset: 20,
+      },
+    });
   });
 
   it('should create a STOP action for the given id', () => {
     const id = 1;
-    const expected = { id, type: actions.STOP };
-    expect(actions.stop(expected.id)).toEqual(expected);
+    const expected = {
+      type: actions.PLAYER_REQUEST,
+      payload: {
+        id,
+        command: 'stop',
+      },
+    };
+
+    expect(actions.stop(id)).toEqual(expected);
   });
 
   it('should create a PAUSE action for the given id', () => {
     const id = 1;
-    const expected = { id, type: actions.PAUSE };
-    expect(actions.pause(expected.id)).toEqual(expected);
+    const expected = {
+      type: actions.PLAYER_REQUEST,
+      payload: {
+        id,
+        command: 'pause',
+      },
+    }
+    expect(actions.pause(id)).toEqual(expected);
   });
 
   it('should create an UPDATE_STATUS action for the given id and status', () => {

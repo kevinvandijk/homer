@@ -1,40 +1,13 @@
-export const SEARCH = 'homer/plex/SEARCH';
-export const PLAY = 'homer/plex/PLAY';
-export const STOP = 'homer/plex/STOP';
-export const PAUSE = 'homer/plex/PAUSE';
 export const UPDATE_STATUS = 'homer/plex/UPDATE_STATUS';
 
 export const SEARCH_MEDIA_REQUEST = 'homer/plex/SEARCH_MEDIA_REQUEST';
 export const SEARCH_MEDIA_SUCCESS = 'homer/plex/SEARCH_MEDIA_SUCCESS';
 export const SEARCH_MEDIA_FAILURE = 'homer/plex/SEARCH_MEDIA_FAILURE';
 
-export function search(name) {
-  return {
-    name,
-    type: SEARCH,
-  };
-}
+export const PLAYER_REQUEST = 'homer/plex/PLAYER_REQUEST';
+export const PLAYER_SUCCESS = 'homer/play/PLAYER_SUCCESS';
+export const PLAYER_FAILURE = 'homer/play/PLAYER_FAILURE';
 
-export function play(id) {
-  return {
-    id,
-    type: PLAY,
-  };
-}
-
-export function stop(id) {
-  return {
-    id,
-    type: STOP,
-  };
-}
-
-export function pause(id) {
-  return {
-    id,
-    type: PAUSE,
-  };
-}
 
 export function updateStatus(id, status) {
   return {
@@ -73,6 +46,64 @@ export function searchMediaFailure(id, error) {
     type: SEARCH_MEDIA_FAILURE,
   };
 }
+
+export function playerSuccess(id, results) {
+  return {
+    payload: {
+      id,
+      results,
+    },
+    type: PLAYER_SUCCESS,
+  };
+}
+
+export function playerFailure(id, error) {
+  return {
+    payload: {
+      id,
+      error,
+    },
+    type: PLAYER_FAILURE,
+  };
+}
+export function play(id, key, offset = 0) {
+  return {
+    payload: {
+      id,
+      key,
+      offset,
+      command: 'playMedia',
+    },
+    type: PLAYER_REQUEST,
+  };
+}
+
+function createPlayerAction(command) {
+  return (id) => (
+    {
+      payload: {
+        id,
+        command,
+      },
+      type: PLAYER_REQUEST,
+    }
+  );
+}
+
+export const pause = createPlayerAction('pause');
+export const resume = createPlayerAction('play');
+export const stop = createPlayerAction('stop');
+export const rewind = createPlayerAction('rewind');
+export const stepBack = createPlayerAction('stepBack');
+export const bigStepBack = createPlayerAction('bigStepBack');
+export const fastForward = createPlayerAction('fastForward');
+export const stepForward = createPlayerAction('stepForward');
+export const bigStepForward = createPlayerAction('bigStepForward');
+export const skipNext = createPlayerAction('skipNext');
+export const skipPrevious = createPlayerAction('skipPrevious');
+
+
+
 
 
 // // END NEW
