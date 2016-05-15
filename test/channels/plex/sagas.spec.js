@@ -175,7 +175,7 @@ describe('Plex Sagas', () => {
       expect(result).toEqual(expected);
     });
 
-    it('dispatches a SEARCH_MEDIA_FAILURE when an error coccuered', () => {
+    it('dispatches a SEARCH_MEDIA_FAILURE when an error occured', () => {
       const error = new Error('stupid error');
       const saga = sagas.searchMedia(1, plexMock, 'something');
       saga.next();
