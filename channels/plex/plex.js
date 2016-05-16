@@ -55,20 +55,22 @@ async function listItems(connection, sections) {
 export default class PlexController {
   constructor(plexOptions) {
     this.device = plexOptions.device;
-    this.connection = new PlexApi(plexOptions);
-    this.connection.authToken = plexOptions.authToken;
+    this.server = new PlexApi(plexOptions);
+    this.server.authToken = plexOptions.authToken;
+    this.server.identifier = plexOptions.identifier;
+    this.commandId = 0;
   }
 
   status = async () => {
-    const state = await getPlayerStatus(this.connection, this.device);
+    const state = await getPlayerStatus(this.server, this.device);
     return state;
   }
 
   search = async (query = '', options = { fuzzy: true }) => {
-    const directories = await getDirectories(this.connection);
+    const directories = await getDirectories(this.server);
     if (!directories.length) return [];
 
-    const items = await listItems(this.connection, directories);
+    const items = await listItems(this.server, directories);
     if (!items.length) return [];
 
     const results = (options.fuzzy
