@@ -5,6 +5,9 @@ import {
   updateStatus,
   UPDATE_STATUS,
   SEARCH_MEDIA_REQUEST,
+  PLAYER_REQUEST,
+  playerSuccess,
+  playerFailure,
   searchMediaSuccess,
   searchMediaFailure,
 } from './actions';
@@ -60,17 +63,34 @@ export function* searchMedia(id, instance, title) {
   }
 }
 
-function* controller() {
-  let runningAction;
+export function* playerRequest(id, instance, command) {
+  try {
+    const result = yield call(instance.player, command);
+    yield put(playerSuccess(id, result));
+  } catch (err) {
+    yield put(playerFailure(id, err));
+  }
+}
 
+function* controller() {
   while (true) {
     const action = yield take('*');
 
     switch (action.type) {
-      case SEARCH_MEDIA_REQUEST:
+      case SEARCH_MEDIA_REQUEST: {
         const { id } = action.payload;
         const instance = instances[id];
         yield fork(searchMedia, id, instance, action.payload.title);
+        break;
+      }
+
+      case PLAYER_REQUEST: {
+        const { id, command } = action.payload;
+        const instance = instances[id];
+        yield fork(playerRequest, id, instance, command);
+        break;
+      }
+      default:
         break;
     }
   }
