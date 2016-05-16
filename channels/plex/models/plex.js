@@ -27,61 +27,18 @@ export default class PlexChannel {
     });
   }
 
-  pause() {
-    return this._playerCommand('pause');
-  }
 
-  resume() {
-    return this._playerCommand('play');
-  }
-
-  rewind() {
-    return this._playerCommand('rewind');
-  }
-
-  fastForward() {
-    return this._playerCommand('fastForward');
-  }
-
-  stepForward() {
-    return this._playerCommand('stepForward');
-  }
-
-  stepBack() {
-    return this._playerCommand('stepBack');
-  }
-
-  bigStepForward() {
-    return this._playerCommand('bigStepForward');
-  }
-
-  bigStepBack() {
-    return this._playerCommand('bigStepBack');
-  }
-
-  skipNext() {
-    return this._playerCommand('skipNext');
-  }
-
-  skipPrevious() {
-    return this._playerCommand('skipPrevious');
-  }
-
-  stop() {
-    return this._playerCommand('stop');
-  }
-
-  getShows() {
-    return Promise.resolve(this.server.query('/library/sections/2/all')).then(results => {
-      return results._children || [];
-    });
-  }
-
-  getMovies() {
-    return Promise.resolve(this.server.query('/library/sections/4/all')).then(results => {
-      return results._children || [];
-    });
-  }
+  // getShows() {
+  //   return Promise.resolve(this.server.query('/library/sections/2/all')).then(results => {
+  //     return results._children || [];
+  //   });
+  // }
+  //
+  // getMovies() {
+  //   return Promise.resolve(this.server.query('/library/sections/4/all')).then(results => {
+  //     return results._children || [];
+  //   });
+  // }
 
   getEpisodes(showOrKey) {
     const key = (typeof showOrKey === 'object') ? showOrKey.ratingKey : showOrKey;

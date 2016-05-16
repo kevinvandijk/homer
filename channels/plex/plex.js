@@ -52,12 +52,31 @@ async function listItems(connection, sections) {
   ).reduce((a, b) => a.concat(b));
 }
 
+function stringifyParams(paramsObject) {
+  return Object.keys(paramsObject).map(key =>
+    `${encodeURIComponent(key)}=${encodeURIComponent(paramsObject[key])}`
+  ).join('&');
+}
+
+
+// TODO: Deal with connection errors
 export default class PlexController {
   constructor(plexOptions) {
     this.device = plexOptions.device;
     this.server = new PlexApi(plexOptions);
     this.server.authToken = plexOptions.authToken;
     this.server.identifier = plexOptions.identifier;
+
+    const { player } = plexOptions;
+    if (player) {
+      this.player = new PlexApi({
+        hostname: player.hostname,
+        port: player.port,
+      });
+    } else {
+      this.player = this.server;
+    }
+
     this.commandId = 0;
   }
 
@@ -84,5 +103,27 @@ export default class PlexController {
       ? [results[0]]
       : results
     );
+  }
+
+  player = async (command, options = {}) => {
+    if (!command) throw new Error('No player command specified');
+
+    this.commandId = this.commandId + 1;
+    const { identifier, hostname, port } = this.server;
+    const params = {
+      port,
+      machineIdentifier: identifier,
+      address: hostname,
+      commandId: this.commandId,
+      ...options,
+    };
+
+    const uri = `/player/playback${command}?${stringifyParams(params)}`;
+    const result = this.player.postQuery(uri);
+    if (parseInt(result.code, 10) !== 200) {
+      throw new Error(result);
+    }
+
+    return result;
   }
 }
