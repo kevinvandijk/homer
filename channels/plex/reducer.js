@@ -1,7 +1,9 @@
 // import { ADD_CONNECTOR } from '../../actions';
 import { UPDATE_STATUS, SEARCH_MEDIA_SUCCESS } from './actions';
 
-const initialState = {};
+const initialState = {
+  search: {},
+};
 
 export default function reducer(state = initialState, action) {
   switch (action.type) {
