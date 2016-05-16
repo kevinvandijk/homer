@@ -57,7 +57,7 @@ export function* listener(id, instance) {
 export function* searchMedia(id, instance, title) {
   try {
     const results = yield call(instance.search, title);
-    yield put(searchMediaSuccess(id, results));
+    yield put(searchMediaSuccess(id, title, results));
   } catch (err) {
     yield put(searchMediaFailure(id, err));
   }

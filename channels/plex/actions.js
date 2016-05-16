@@ -27,11 +27,12 @@ export function searchMedia(id, title) {
   };
 }
 
-export function searchMediaSuccess(id, results) {
+export function searchMediaSuccess(id, query, results) {
   return {
     payload: {
       id,
       results,
+      query,
     },
     type: SEARCH_MEDIA_SUCCESS,
   };
