@@ -14,7 +14,7 @@ export function waitOnAction(store, actionType) {
       const reduced = reducer(state, action);
 
       if (action.type === actionType) {
-        resolve(reduced);
+        resolve(action);
       }
       return reduced;
     });
