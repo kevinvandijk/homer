@@ -8,15 +8,14 @@ import bunyanLogger from 'koa-bunyan-logger';
 import bunyan from 'bunyan';
 import configureStore from './configure-store';
 import reducer, { waitOnAction } from './reducer';
-
-// TODO: Rename this:
-import plexRouter from './channels/plex/router';
+import path from 'path';
 
 dotenv.load();
 
 const log = bunyan.createLogger({
   name: 'homer',
 });
+const store = configureStore(reducer);
 const router = koaRouter();
 const app = new Koa();
 
@@ -27,33 +26,43 @@ app
   .use(router.routes())
   .use(router.allowedMethods());
 
-router.use('/api/plex', plexRouter.routes());
+// Autoloading channels:
+const packageJSON = require(path.join(__dirname, 'package.json'));
+const channels = Object.keys(packageJSON.dependencies).filter(
+  name => name.match(/^homer-channel-/)
+);
 
-router.get('/status', (ctx) => {
-  ctx.body = 'ok';
+// TODO: Refactor:
+const channelHelpers = {
+  waitForAction: (actionType) => (waitOnAction(store, actionType)),
+};
+
+channels.forEach(fullName => {
+  // // TODO: Replace object with function for state for channel
+  const channel = require(fullName)({}, store.dispatch);
+  const channelName = fullName.replace(/^homer-channel-/, '');
+
+  if (channel.router) {
+    const channelRouter = (typeof channel.router === 'function'
+      ? channel.router(channelHelpers)
+      : channel.router
+    );
+
+    router.use(
+      `/api/channel/${channelName}`,
+      channelRouter.routes(),
+      channelRouter.allowedMethods()
+    );
+  }
 });
-
 
 // After importing all reducers and sagas and actions and stuff, fire a global
 // CONNECT type of action, to which all others are listening and will set their connections
 // in state at one point
-const store = configureStore(reducer);
 const config = {}; // TODO: Read configs
 store.dispatch({
   config,
   type: 'homer/request_connectors',
-});
-
-router.post('/action', async (ctx) => {
-  const { type, waitOn, payload } = ctx.request.body;
-  store.dispatch({ type, payload });
-
-  if (waitOn) {
-    const result = await waitOnAction(store, waitOn);
-    ctx.body = result.payload;
-  } else {
-    ctx.status = 202;
-  }
 });
 
 app.listen(3000, () => {
